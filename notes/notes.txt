@@ -103,3 +103,12 @@ Je suis passé au rigging => consultation de quelques tutoriaux basiques
 Avec une armature on peut animer un objet constitué de plusieurs meshes (contrairement aux shape keys)
 cf. http://blender.stackexchange.com/questions/19313/character-made-with-multiple-objects-one-armature-or-different-armatures
 
+OK, l'animation par bones + armature donne de bons résultats
+Exportation de l'animation au format .pc2 : installation du plugin, puis :
+ * sélection de tous les meshes,
+ * noter frames début et fin animation,
+ * exportation avec les options par défaut (mais modifier début / fin frames, et il faudra voir l'intérêt du "Convert to Y-up")
+   => attention à ne pas écraser le .blend
+Ensuite exporter .obj avec options :
+ * Triangulate Faces
+ * Keep Vertex Order

@@ -1,0 +1,21 @@
+{
+  "name": "parse-pc2",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+	"lint": "jshint index.js demo.js test/",
+    "test": "mocha --reporter spec test/",
+	"demo": "node demo.js"
+  },
+  "devDependencies": {
+    "jshint": "latest",
+    "mocha": "latest"
+ },
+  "dependencies": {
+    "dissolve": "^0.3.3",
+	"chai": "latest",
+	"stream-browserify": "^2.0.1",
+	"traverse": "latest",
+	"in-array": "latest"
+  }
+}

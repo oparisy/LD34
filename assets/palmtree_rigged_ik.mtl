@@ -1,0 +1,20 @@
+# Blender MTL File: 'palmtree_rigged_ik.blend'
+# Material Count: 2
+
+newmtl LeafMaterial
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.105291 0.640000 0.037786
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl WoodMaterial
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.316921 0.007227
+Ks 0.500000 0.500000 0.500000
+Ni 1.000000
+d 1.000000
+illum 2

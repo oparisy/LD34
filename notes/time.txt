@@ -11,3 +11,6 @@ Samedi :
 17h15 : armature réalisée
 17h45 : rigging + IK OK
 19h00 : animation OK
+20h15 : parser pc2 démarré
+20h15 -> 21h45 : repas
+23h00 : parser .pc2 terminé
