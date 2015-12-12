@@ -1,0 +1,13 @@
+Samedi :
+ 9h15 : arrivée à SG / MT
+ 9h45 : installé, repo github créé
+11h30 : j'ai identifié le format glTF pour stocker mes assets et leur animation
+12h10 : mécanisme d'animation identifié (shape keys) + étudié tutos basiques
+13h15 : palmier + matériaux basiques modélisé
+13h30 -> 14h30 : repas
+15h30 : le format glTF n'est pas approprié (morph / shape keys pas supportée) => recherche autre solution
+16h15 : l'animation par shape keys est pénible pour un objet constitué de plusieurs meshes => je tente un rigging
+16h15 -> 16h30 : pause
+17h15 : armature réalisée
+17h45 : rigging + IK OK
+19h00 : animation OK

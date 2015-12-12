@@ -1,0 +1,105 @@
+Thèmes (1 ou 2 à prendre) :
+ * Growing
+ * Two button controls
+
+Growing => "en croissance" mais aussi "faire croître" ("He's growing a garden")
+
+Pitch : faire pousser des arbres / plantes / fleurs sur un terrain
+
+Motivation ? Antagonistes ? Gameplay ?
+
+Technique :
+* terrain : un mesh avec un peu de relief mais globalement 2D (height map)
+* pousse : lattice ? morphing entre meshes ? lsystems ?
+* animation : mécanisme interpolable +  tweening
+
+Sinon, idée idiote si je m'investis sur l'animation de croissance :
+ * ne faire que ça + des plantes en pots,
+ * mini jeu à deux boutons pour les faire pousser avec augmentation progressive de la difficulté
+
+Blender sait faire du morphing entre meshes :
+	http://blender.stackexchange.com/questions/23872/shape-key-morphing-between-two-meshes-with-different-vertices
+	http://blenderartists.org/forum/showthread.php?243711-Can-Blender-Morph-from-One-Mesh-to-Another
+
+https://www.reddit.com/r/gamedev/comments/2mw7x5/what_formats_to_use_for_modelsanimations_made_in/ :
+
+ * "A simple format is Valve's SMD which is a text based format that describes vertices, bones and animations. There is an exported for Blender that can write to this format. Personally i'd write some SMD-to-custom-binary-format conversion tool (to avoid parsing SMD files) but you can use those files directly (Valve did the former - they converted the SMD files to custom binary format)."
+
+ * "No, but if you want simple animations with models that aren't very high poly, you can use a series of OBJ files and morph between them (this is how many 90s and some early 2000s games did animations... and some indie games still do since it is a trivially simple solution). Blender can export a series of OBJ files from any animation (not just bones, but anything that doesn't change vertex indices) that can be used for morph-based animation"
+
+ * "Just remember that Collada is intended as an editor format. It is expressly not designed to be any good at all as a runtime format. For your runtime, you should look into something like https://github.com/KhronosGroup/glTF"
+ 
+ * "You write the format yourself. That's what everyone else does. It's not that hard. Whatever you do, don't use COLLADA."
+
+https://developer.valvesoftware.com/wiki/Studiomdl_Data => "SMD has been superseded by the DMX model format"
+(DMX semble significativement plus complexe car supporte les fonctionnalités de Source => overkill)
+
+gITF : "The GL Transmission Format (glTF) is a runtime asset delivery format for GL APIs: WebGL, OpenGL ES, and OpenGL. glTF bridges the gap between 3D content creation tools and modern GL applications by providing an efficient, extensible, interoperable format for the transmission and loading of 3D content."
+
+module node : https://www.npmjs.com/package/gltf-viewer-element
+
+Modèles exemples : https://github.com/KhronosGroup/glTF/blob/master/sampleModels/README.md
+
+https://cesiumjs.org/2014/12/15/glTF-Tips-for-Artists/
+ => (blender) "For models with textures, check the Include UV Textures and Include Material Textures COLLADA exporter option to make sure they are exported."
+
+Exporteur en ligne collada => glTF :
+http://cesiumjs.org/convertmodel.html
+(ne marche pas avec mes modèles de test exportés depuis blender)
+
+=> test des exporters collada et fbx en ligne de commande :
+https://github.com/KhronosGroup/glTF/wiki/converter
+https://github.com/cyrillef/FBX-glTF
+
+Ma scène de test (deux cubes colorés par faces, avec une relation de parenté) s'exporte bien depuis le dae avec collada2gltf
+=> la scène en texte, un .bin pour les buffers, un fs et un vs
+Il existe un wrapper node pour cet outil (mais je peux invoquer la ligne de commande directement depuis mon package.json)
+
+Trois modules npm en rapport avec ce format :
+gltf-statistics
+gltf-viewer-element => utilise THREE.glTFLoader (https://github.com/mrdoob/three.js/tree/master/examples/js/loaders/gltf)
+gltf-walker => il n'est pas clair qu'il lise le .bin
+
+Le format est assez lisible en première analyse, mais j'ai un doute sur le stockage des animations
+=> je vais faire une animation basique par "Shape Keys" dans blender, exporter et étudier le glTF résultant :
+	http://www.blender.org/manual/animation/shape_keys.html
+* "Join as Shapes" permet de mettre en correspondance deux meshes s'ils ont les mêmes vertex data
+* Les tutos insistent sur le fait de ne pas modifier la topologie
+* Quelques tutos :
+  * https://www.youtube.com/watch?v=z_sWIy8xA2k (!!! morphing d'un mesh + animation)
+  * https://www.youtube.com/watch?v=gDZcmAWL2jA
+  * https://en.wikibooks.org/wiki/Blender_3D:_Noob_to_Pro/Advanced_Tutorials/Advanced_Animation/Guided_tour/Mesh/Shape
+
+Objectif minimal de cette journée :
+ * un viewer permettant de passer entre deux niveaux d'animation de pousse,
+ * contrôlé par deux boutons du pad
+
+Souci de l'animation "shape keys" : on ne peut avoir qu'un objet à la fois en edit mode => pas pratique pour un objet composé (arbre + feuilles)
+=> question stack overflow
+
+Test avec une animation basique (cube déformé) : les deux shape keys sont bien présentes dans le .dae, mais pas dans le .gltf final
+=> oui, c'est hors spec pour l'instant : https://github.com/KhronosGroup/glTF/issues/210
+
+=> abandon du format gltf, utilisation de .obj + baking :
+https://forums.unrealengine.com/showthread.php?69270-Blender-Shape-key-animation-Mesh-deform
+Facile (cocher la case "export animation") mais autant de .obj que de frames d'animation
+(confirmé par http://gamedev.stackexchange.com/questions/23881/is-it-possible-to-export-a-simulation-animation-from-blender-to-unity)
+
+(remarque) Ce thread suggère le format MDD pour les animations :
+http://blenderartists.org/forum/showthread.php?245798-How-can-I-export-convert-an-explosion-as-animated-mesh
+
+On peut exporter shape key par shape key :
+http://blenderartists.org/forum/archive/index.php/t-221609.html
+ * Faire "pinned" dans la zone "Shape Keys" de l'objet
+ * "Export selection" => obj (cocher triangulation, keep order)
+
+A noter que le format fbx supporte les shape keys :
+http://blenderartists.org/forum/showthread.php?326088-How-to-convert-a-shapekey-animation-into-keyframe-data-to-export-as-fbx-into-Junaio
+
+Ce thread ne recommande pas cette méthode d'animation, rendue obsolète par les bones :
+http://blenderartists.org/forum/archive/index.php/t-300572.html
+
+Je suis passé au rigging => consultation de quelques tutoriaux basiques
+Avec une armature on peut animer un objet constitué de plusieurs meshes (contrairement aux shape keys)
+cf. http://blender.stackexchange.com/questions/19313/character-made-with-multiple-objects-one-armature-or-different-armatures
+
