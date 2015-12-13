@@ -18,3 +18,4 @@ Samedi :
 
 Dimanche :
  9h15: reprise
+10h30: chargement .pc2 débuggué
