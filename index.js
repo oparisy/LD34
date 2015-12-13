@@ -19,6 +19,15 @@ var glShader = require('gl-shader');
 var glslify  = require('glslify');
 var mat4    = require('gl-mat4');
 
+var createOrbitCamera = require("orbit-camera");
+var GPControls = require('gp-controls');
+
+var gamepad = GPControls({
+    '<axis-left-x>': 'x',
+	'<axis-left-y>': 'y',
+	'<action 1>': 'plant'
+});
+
 // Creates a canvas element and attaches
 // it to the <body> on your DOM.
 var canvas = document.body.appendChild(document.createElement('canvas'));
@@ -41,12 +50,14 @@ var shader = glShader(gl,
     glslify('./shaders/flat.vert'),
 	glslify('./shaders/flat.frag'));
 
-var proj = mat4.create();
-var camera = turntableCamera();
+var eye = [0, 0, -35];
+var center = [0, 0, 0];
+var up = [1, 0, 0];
+var camera = createOrbitCamera(eye, center, up);
 
-//camera.center[1] = -5; // Up?
-camera.distance += 2;
-camera.downwards = Math.PI * 0.0125; // Will influence camera's height wrt the ground
+//var camera = turntableCamera();
+//camera.distance += 2;
+//camera.downwards = Math.PI * 0.0125; // Will influence camera's height wrt the ground
 
 console.log('WebGL setup done, loading assets...');
 var globe = null;
@@ -60,7 +71,7 @@ function loadAssets(globeLoaded) {
 			console.log(err);
 			throw err;
 		}
-		
+
 		console.log('Globe loaded');
 		
 		globe = new Model(objAndMtl, gl);
@@ -68,7 +79,17 @@ function loadAssets(globeLoaded) {
 	});
 }
 
+var lastDate = Date.now();
+var lastx=0, lasty=0;
 function render() {
+
+	// Compute the time elasped since last render (in ms)
+	var now = Date.now();
+	var step = now - lastDate;
+	lastDate = now;
+	
+	// Time coefficient. 1 is the base, will double if frame rate doubles
+	var coef = (step === 0) ? 1 : (18/step);
 	
 	var width = canvas.width;
 	var height = canvas.height;
@@ -76,12 +97,29 @@ function render() {
 	gl.viewport(0, 0, width, height);
 	clear(gl);
 
+	var proj = mat4.create();
 	mat4.perspective(proj, Math.PI / 4, width / height, 0.001, 1000);
 
 	// update camera rotation angle
-	camera.rotation = Date.now() * 0.0004;
+	//camera.rotation = Date.now() * 0.0004;
 
 	if (globe !== null) {
+	
+		gamepad.poll();
+		if (gamepad.enabled) {
+			
+			var x=gamepad.inputs.x/(100*coef),y=gamepad.inputs.y/(100*coef);
+			camera.rotate([x,y], [0,0]);
+			lastx = x;
+			lasty = y;
+			
+			if (gamepad.inputs.plant.pressed) {
+				console.log('Plant!');
+			}
+		}
+		
+		// Add a constant rotation
+		camera.rotate([0.0008 / coef,0], [0,0]);
 
 		// Compute matrices
 		// See http://stackoverflow.com/a/21079741/38096

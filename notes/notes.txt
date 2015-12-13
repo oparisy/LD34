@@ -150,3 +150,7 @@ Objectif atteint : rendu flat + animation => création d'une branche animated-as
 
 Refactorisation code sur master (un .js à part pour représenter les modèles chargés)
 Modularisation d'un globe "cartoon"
+
+Je viens de réaliser que le groupement par matériaux ne concerne que les faces contigües dans l'exportateur .obj
+=> dans le cas du globe, 840 draw calls...
+=> il faudra faire mon propre "batcher"

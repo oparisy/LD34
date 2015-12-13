@@ -25,3 +25,6 @@ Dimanche :
 17h30 : couleur des faces OK
 17h30->18h : pause
 20h : calcul normales + shader flat
+20h->20h30 : repas
+22h15 : code gestion modèle isolé, globe modélisé et rendu
+23h15 : gamepad + interaction avec caméra
