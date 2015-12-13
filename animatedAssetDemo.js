@@ -47,28 +47,35 @@ camera.downwards = Math.PI * 0.125; // Will influence camera's height wrt the gr
 
 console.log('WebGL setup done, loading assets...');
 var model = null;
-loadAssets(function(objAndMtl) {
+var animation = null;
+loadAssets(onModelLoaded, onAnimationLoaded);
 
-	var vertices = convertVertices(objAndMtl.vertices);
-	var faces = convertFaces(objAndMtl.faces);
+// Debugging purpose
+var baseVertices;
+var faces;
+
+function onModelLoaded(objAndMtl) {
+
+	baseVertices = convertVertices(objAndMtl.vertices);
+	faces = convertFaces(objAndMtl.faces);
 	
-	/*
-	console.log('vertices count:', vertices.length);
-	var minIndex = faces[0][0];
-	var maxIndex = minIndex;
-	for (var i=0; i<faces.length; i++) {
-		for (var j=0; j<faces[i].length; j++) {
-			minIndex = Math.min(minIndex, faces[i][j]);
-			maxIndex = Math.max(maxIndex, faces[i][j]);
-		}			
-	}
-	console.log('Minimum index:', minIndex, 'maximum index:', maxIndex);
-	*/
-	
-	model = Geom(gl).attr('position', vertices).faces(faces);
+	model = Geom(gl).attr('position', baseVertices).faces(faces);
 
 	console.log('Geometry set up');
-});
+}
+
+function onAnimationLoaded(pc2Data) {
+	// Convert PC2 animation data
+	animation = [];
+	for (var i=0; i<pc2Data.frames.length; i++) {
+		var frame = [];
+		var points = pc2Data.frames[i].points;
+		for (var j=0; j<points.length; j++) {
+			frame.push([ points[j].x, points[j].y, points[j].z ]);
+		}
+		animation.push(frame);
+	}
+}
 
 // Convert vertices returned by obj-mtl-loader to a format suitable for gl-geometry
 function convertVertices(vertices) {
@@ -123,6 +130,27 @@ function render() {
 	camera.rotation = Date.now() * 0.0004;
 
 	if (model !== null) {
+		
+		if (animation !== null) {
+		
+			// Hardcoded number of frames
+			var currentFrame = Math.floor(Date.now() * 0.02) % 30;
+			var currentFrameVertices = animation[currentFrame]; //baseVertices;
+			assert.isArray(currentFrameVertices);
+			assert.equal(currentFrameVertices.length, baseVertices.length);
+
+			/*
+			// Force an update
+			model._attributes = [];
+			model._keys = [];
+			model.attr('position', currentFrameVertices);
+			*/
+
+			// Stupidly inefficient
+			// TODO Should I call model.dispose(); ?
+			model = Geom(gl).attr('position', currentFrameVertices).faces(faces);
+		}
+	
 		model.bind(shader);
 		shader.uniforms.proj = proj;
 		shader.uniforms.view = camera.view();
@@ -130,9 +158,8 @@ function render() {
 	}	
 }
 
-function loadAssets(modelLoaded) {
+function loadAssets(modelLoaded, animationLoaded) {
 
-	var objAndMtl;
 	var objLoader = new ObjMtlLoader();
 	objLoader.load('./assets/palmtree_animated_joined.obj', './assets/palmtree_animated_joined.mtl', function(err, result) {
 		if (err) {
@@ -140,19 +167,16 @@ function loadAssets(modelLoaded) {
 			throw err;
 		}
 		
-		objAndMtl = result;
 		console.log('Model loaded');
-		
-		modelLoaded(objAndMtl);
+		modelLoaded(result);
 	});
 
-	var pc2;
 	var pc2Loader = new PC2Loader();
 	pc2Loader.on('readable', function() {
 		var parsed = pc2Loader.read();
 		if (parsed) {
-			pc2 = parsed;
 			console.log('Animation loaded');
+			animationLoaded(parsed);
 		}
 	});
 
