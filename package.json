@@ -1,0 +1,27 @@
+{
+  "name": "ld34",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+	"lint": "jshint index.js animatedAssetDemo.js",
+    "prestart": "browserify -d animatedAssetDemo.js -o bundle.js",
+    "start": "beefy animatedAssetDemo.js --live --open"
+  },
+  "devDependencies": {
+    "jshint": "latest",
+     "beefy": "^2.1.1",
+    "browserify": "^6.2.0",
+	"glslify": "^2.2.1",
+	"brfs": "^1.4.1"
+  },
+  "dependencies": {
+	"obj-mtl-loader": "0.0.4",
+	"xhr-request": "1.0.1",
+	"arraybuffer-to-buffer": "0.0.1"
+  },
+  "browserify": {
+    "transform": [
+      "glslify", "brfs"
+    ]
+  }
+}

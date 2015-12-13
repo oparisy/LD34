@@ -112,3 +112,18 @@ Exportation de l'animation au format .pc2 : installation du plugin, puis :
 Ensuite exporter .obj avec options :
  * Triangulate Faces
  * Keep Vertex Order
+
+Parser pour .pc2 écrit. Malheureusement il n'écrit les vertex que d'un mesh malgré le select all...
+
+Script pour lister stats des meshes :
+import bpy
+print("Object, Verts, faces, edges")
+for element in bpy.context.scene.objects:
+    if element.type != "MESH": continue
+    print("%s, %i, %i, %i" % (element.data.name, len(element.data.vertices), len(element.data.polygons), len(element.data.edges)))
+
+MAIS : faire un Ctrl + J après avoir sélectionné l'ensemble des meshes n'altère pas l'animation !
+Exportation du .obj avec options habituelles + "Material Groups" coché
+=> on a bien les 510 vertex attendus
+
+Du mal à lire le pc2 via une requête xhr ; finalement c'était dû à mécanique de ArrayBuffer, à convertir vers un buffers

@@ -14,3 +14,7 @@ Samedi :
 20h15 : parser pc2 démarré
 20h15 -> 21h45 : repas
 23h00 : parser .pc2 terminé
+23h30 : premier asset exporté correctement
+
+Dimanche :
+ 9h15: reprise
