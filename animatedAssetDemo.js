@@ -33,6 +33,8 @@ var gl = glContext(canvas, render);
 window.addEventListener('resize', fit(canvas), false);
 
 var clear = glClear({ color: [0, 0, 0, 1], depth: true });
+gl.enable(gl.CULL_FACE);
+gl.enable(gl.DEPTH_TEST);
 
 var shader = glShader(gl,
     glslify('./shaders/demo.vert'),
@@ -50,16 +52,33 @@ var model = null;
 var animation = null;
 loadAssets(onModelLoaded, onAnimationLoaded);
 
-// Debugging purpose
-var baseVertices;
-var faces;
-
 function onModelLoaded(objAndMtl) {
 
-	baseVertices = convertVertices(objAndMtl.vertices);
-	faces = convertFaces(objAndMtl.faces);
+	// Convert data to the expect format
+	var vertices = convertVertices(objAndMtl.vertices);
+	var faces = convertFaces(objAndMtl.faces);
+
+	// Build rendering model (manage VAO, buffers and draw calls)
+	model = Geom(gl).attr('position', vertices).faces(faces);
 	
-	model = Geom(gl).attr('position', baseVertices).faces(faces);
+	// Attach topology and materials data to model for later use
+	model.data = {};
+	model.data.faces = faces;
+	model.data.materials = objAndMtl.materials;
+	model.data.facesMaterials = objAndMtl.facesMaterialsIndex;
+	
+	console.log('Model statistics: ' + vertices.length + ' vertices, ' + faces.length + ' faces, ' + model.data.materials.length + ' materials');
+	console.log('Materials:', model.data.materials);
+	console.log('Faces Materials:', model.data.facesMaterials);
+
+	// We want to be able to access those by name
+	for (var i=0; i<model.data.materials.length; i++) {
+		var material = model.data.materials[i];
+		model.data.materials[material.name] = material;
+	}
+
+	// Debugging purpose
+	model.data.baseVertices = vertices;
 
 	console.log('Geometry set up');
 }
@@ -130,31 +149,47 @@ function render() {
 	camera.rotation = Date.now() * 0.0004;
 
 	if (model !== null) {
-		
+
 		if (animation !== null) {
-		
-			// Hardcoded number of frames
-			var currentFrame = Math.floor(Date.now() * 0.02) % 30;
-			var currentFrameVertices = animation[currentFrame]; //baseVertices;
+
+			var currentFrame = Math.floor(Date.now() * 0.02) % animation.length;
+			var currentFrameVertices = animation[currentFrame];
 			assert.isArray(currentFrameVertices);
-			assert.equal(currentFrameVertices.length, baseVertices.length);
+			assert.equal(currentFrameVertices.length, model.data.baseVertices.length);
 
-			/*
-			// Force an update
-			model._attributes = [];
-			model._keys = [];
-			model.attr('position', currentFrameVertices);
-			*/
-
-			// Stupidly inefficient
-			// TODO Should I call model.dispose(); ?
-			model = Geom(gl).attr('position', currentFrameVertices).faces(faces);
+			// Stupidly inefficient but I won't recode this now :)
+			var data = model.data;
+			model.dispose();
+			model = Geom(gl).attr('position', currentFrameVertices).faces(data.faces);
+			model.data = data;
 		}
-	
+
 		model.bind(shader);
 		shader.uniforms.proj = proj;
 		shader.uniforms.view = camera.view();
-		model.draw(gl.TRIANGLES);
+
+		// Subdivide draw calls by material (we asked the obj exporter to sort faces accordingly)
+		var fmat = model.data.facesMaterials;
+		for (var i=0; i<fmat.length; i++) {
+			var facesInfo = fmat[i];
+			var firstFace = facesInfo.materialStartIndex;
+			var nbFaces = ((i == fmat.length - 1) ? (model.data.faces.length) : fmat[i + 1].materialStartIndex) - firstFace;
+
+			var material = model.data.materials[facesInfo.materialName];
+			var diffuse = material.diffuse;
+			var color = [ parseFloat(diffuse[0]), parseFloat(diffuse[1]), parseFloat(diffuse[2]) ];
+			shader.uniforms.color = color;
+
+			// That was bloody painful to deduce from my strange rendering bugs
+			// See http://stackoverflow.com/questions/10221647/how-do-i-use-webgl-drawelements-offset
+			var start = firstFace * 3 * 2; // "2" is sizeof(uint16)
+			var stop = nbFaces * 3 + start;
+
+			//console.log('start:',start,'stop:',stop);
+			model.draw(gl.TRIANGLES, start, stop);
+		}
+
+		model.unbind();
 	}	
 }
 

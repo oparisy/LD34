@@ -131,3 +131,10 @@ Du mal à lire le pc2 via une requête xhr ; finalement c'était dû à mécaniq
 Des finesses de différences de format obj-mtl-loader / gl-geometry => écriture de conversions
 
 Animation PC2 correctement appliquée ; j'ai l'impression de passer mon temps à convertir des tableaux...
+
+Dessin matériau : commencer par vérifier qu'on peut passer les couleurs
+Plutôt que de changer de shader, utiliser un uniform et profiter du fait que les faces soient triées et qu'on puisse passer un range
+
+Il y a un bug dans le chargeur de matériaux de obj-mtl-loader => le dernier matériau est perdu. Workaround : ajouter une ligne "newmtl dummy" à la fin du .mtl, TODO : logger une issue.
+
+Temps péniblement perdu sur la coloration des faces depuis les descriptions de matériaux : de multiples conversions + un bug à logguer dans gl-geometry
