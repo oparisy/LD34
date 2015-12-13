@@ -18,6 +18,7 @@ var glClear   = require('gl-clear');
 var glShader = require('gl-shader');
 var glslify  = require('glslify');
 var mat4    = require('gl-mat4');
+var vec3    = require('gl-vec3');
 
 var createOrbitCamera = require("orbit-camera");
 var GPControls = require('gp-controls');
@@ -55,18 +56,14 @@ var center = [0, 0, 0];
 var up = [1, 0, 0];
 var camera = createOrbitCamera(eye, center, up);
 
-//var camera = turntableCamera();
-//camera.distance += 2;
-//camera.downwards = Math.PI * 0.0125; // Will influence camera's height wrt the ground
-
 console.log('WebGL setup done, loading assets...');
-var globe = null;
+var globe = null, cloud = null;
 loadAssets();
 
 function loadAssets(globeLoaded) {
 
-	var objLoader = new ObjMtlLoader();
-	objLoader.load('./assets/globe.obj', './assets/globe.mtl', function(err, objAndMtl) {
+	// Load globe
+	new ObjMtlLoader().load('./assets/globe.obj', './assets/globe.mtl', function(err, objAndMtl) {
 		if (err) {
 			console.log(err);
 			throw err;
@@ -76,8 +73,33 @@ function loadAssets(globeLoaded) {
 		
 		globe = new Model(objAndMtl, gl);
 		globe.setup(globe.geom.data.rawVertices);
+		globe.model = mat4.create();
+	});
+	
+	// Load cloud
+	new ObjMtlLoader().load('./assets/cloud.obj', './assets/cloud.mtl', function(err, objAndMtl) {
+		if (err) {
+			console.log(err);
+			throw err;
+		}
+
+		console.log('Cloud loaded');
+		
+		cloud = new Model(objAndMtl, gl);
+		cloud.setup(cloud.geom.data.rawVertices);
 	});
 }
+
+var cloudsPos = [
+	[ 0, 15, 10 ],
+	[ -10, -13, 11 ],
+	[ -10, -8, 10 ],
+	[ -15, 8, 10 ],
+	[ 0, -12, -8 ],
+	[ +8, 12, -2 ]
+];
+
+var count = 0;
 
 var lastDate = Date.now();
 var lastx=0, lasty=0;
@@ -103,7 +125,7 @@ function render() {
 	// update camera rotation angle
 	//camera.rotation = Date.now() * 0.0004;
 
-	if (globe !== null) {
+	if (globe !== null && count < 20) {
 	
 		gamepad.poll();
 		if (gamepad.enabled) {
@@ -135,8 +157,25 @@ function render() {
 		shader.uniforms.view = view;
 		shader.uniforms.normalMatrix = normalMatrix;
 
+		shader.uniforms.model = globe.model;
 		globe.draw(shader);
-
 		globe.geom.unbind();
-	}	
+		
+		cloud.geom.bind(shader);
+		shader.uniforms.proj = proj;
+		shader.uniforms.view = view;
+		shader.uniforms.normalMatrix = normalMatrix;
+
+		for (var cl=0; cl<cloudsPos.length; cl++) {
+			var cloudModel = mat4.create();
+			var posarr = cloudsPos[cl];
+			var vpos = vec3.create();
+			vec3.set(vpos, posarr[0], posarr[1], posarr[2]);
+			mat4.translate(cloudModel, mat4.create(), vpos);
+			shader.uniforms.model = cloudModel;
+			console.log(cloudModel);
+			cloud.draw(shader);
+		}
+		cloud.geom.unbind();
+	}
 }

@@ -154,3 +154,5 @@ Modularisation d'un globe "cartoon"
 Je viens de réaliser que le groupement par matériaux ne concerne que les faces contigües dans l'exportateur .obj
 => dans le cas du globe, 840 draw calls...
 => il faudra faire mon propre "batcher"
+
+J'arrive à afficher plusieurs instances, de plusieurs modèles

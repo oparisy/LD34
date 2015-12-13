@@ -28,3 +28,5 @@ Dimanche :
 20h->20h30 : repas
 22h15 : code gestion modèle isolé, globe modélisé et rendu
 23h15 : gamepad + interaction avec caméra
+23h15->23h30 : pause
+00h30 : nuages
