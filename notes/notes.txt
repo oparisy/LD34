@@ -127,3 +127,5 @@ Exportation du .obj avec options habituelles + "Material Groups" coché
 => on a bien les 510 vertex attendus
 
 Du mal à lire le pc2 via une requête xhr ; finalement c'était dû à mécanique de ArrayBuffer, à convertir vers un buffers
+
+Des finesses de différences de format obj-mtl-loader / gl-geometry => écriture de conversions

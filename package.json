@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "jshint": "latest",
-     "beefy": "^2.1.1",
+    "beefy": "^2.1.1",
     "browserify": "^6.2.0",
 	"glslify": "^2.2.1",
 	"brfs": "^1.4.1"
@@ -25,7 +25,8 @@
 	"gl-shader": "4.1.0",
 	"gl-clear": "2.0.0",
 	"gl-mat4": "1.1.4",
-	"bunny": "1.0.1"
+	"bunny": "1.0.1",
+	"chai": "3.4.1"
   },
   "browserify": {
     "transform": [

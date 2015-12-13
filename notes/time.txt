@@ -17,5 +17,6 @@ Samedi :
 23h30 : premier asset exporté correctement
 
 Dimanche :
- 9h15: reprise
-10h30: chargement .pc2 débuggué
+ 9h15 : reprise
+10h30 : chargement .pc2 débuggué
+11h45 : affichage modèle chargé en animation "turntable"
