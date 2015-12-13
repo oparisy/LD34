@@ -17,6 +17,7 @@ var glClear   = require('gl-clear');
 var glShader = require('gl-shader');
 var glslify  = require('glslify');
 var mat4    = require('gl-mat4');
+var computeNormals = require('normals');
 
 // Creates a canvas element and attaches
 // it to the <body> on your DOM.
@@ -37,8 +38,8 @@ gl.enable(gl.CULL_FACE);
 gl.enable(gl.DEPTH_TEST);
 
 var shader = glShader(gl,
-    glslify('./shaders/demo.vert'),
-	glslify('./shaders/demo.frag'));
+    glslify('./shaders/flat.vert'),
+	glslify('./shaders/flat.frag'));
 
 var proj = mat4.create();
 var camera = turntableCamera();
@@ -56,24 +57,41 @@ function onModelLoaded(objAndMtl) {
 
 	// Convert data to the expect format
 	var vertices = convertVertices(objAndMtl.vertices);
-	var faces = convertFaces(objAndMtl.faces);
+	var tuple = convertFaces(objAndMtl.faces);
+	var rawFaces = tuple[0], rawNormals = tuple[1]; // Could use destructuring assignment. Not sure of its availability
+	
+	// Duplicate vertices and normals indexes since there is one normal per face
+	// (so a member of "vertices" will have as many normals as faces it contributes to)
+	// See https://forums.khronos.org/showthread.php/7063-Texture-coordinates-per-face-index-instead-of-per-vertex
+	// Having separate faces is mndatory to get a "flat" shading
+	// Note that we will not actually use the .obj normals since the .pc2 does not provide them for intermediary poses
+	// To keep things simple each face "f" (numbered from 0) will use position and normal at index f, f+1 and f+2
+	var faceIndices = [];
+	for (var i=0; i<rawFaces.length; i++) {
+		faceIndices.push([3*i, 3*i+1, 3*i+2]);
+	}
+	assert.equal(faceIndices.length, objAndMtl.faces.length);
+	assert.equal(faceIndices.length, rawFaces.length);
 
 	// Build rendering model (manage VAO, buffers and draw calls)
-	model = Geom(gl).attr('position', vertices).faces(faces);
+	// Note that this object will not actually be drawn (see render)
+	model = Geom(gl).attr('position', vertices).faces(rawFaces);
 	
 	// Attach topology and materials data to model for later use
-	model.data = {};
-	model.data.faces = faces;
-	model.data.materials = objAndMtl.materials;
-	model.data.facesMaterials = objAndMtl.facesMaterialsIndex;
+	var data = {};
+	data.rawFaces = rawFaces;
+	data.faceIndices = faceIndices;
+	data.materials = objAndMtl.materials;
+	data.facesMaterials = objAndMtl.facesMaterialsIndex;
+	model.data = data;
 	
-	console.log('Model statistics: ' + vertices.length + ' vertices, ' + faces.length + ' faces, ' + model.data.materials.length + ' materials');
+	console.log('Raw model statistics: ' + vertices.length + ' vertices, ' + rawFaces.length + ' faces, ' + model.data.materials.length + ' materials');
 	console.log('Materials:', model.data.materials);
 	console.log('Faces Materials:', model.data.facesMaterials);
 
 	// We want to be able to access those by name
-	for (var i=0; i<model.data.materials.length; i++) {
-		var material = model.data.materials[i];
+	for (var j=0; j<model.data.materials.length; j++) {
+		var material = model.data.materials[j];
 		model.data.materials[material.name] = material;
 	}
 
@@ -111,7 +129,7 @@ function convertVertices(vertices) {
 	}
 	
 	if (vertices[0].length === 4) {
-		// Only keep the first 3 components for eacch vertex
+		// Only keep the first 3 components for each vertex
 		var result = [];
 		for (var i=0; i<vertices.length; i++) {
 			result.push([ vertices[i][0], vertices[i][1], vertices[i][2] ]);
@@ -122,17 +140,19 @@ function convertVertices(vertices) {
 	throw 'Unhandled vertices format';
 }
 
-// Convert vertices returned by obj-mtl-loader to an indices format suitable for gl-geometry
+// Convert vertice and normal indexes returned by obj-mtl-loader to a format suitable for gl-geometry
 function convertFaces(faces) {
 	assert.isArray(faces);
 	
-	var result = [];
+	var verticesIndex = [];
+	var normalsIndex = [];
 	for (var i=0; i<faces.length; i++) {
-	var indices	= faces[i].indices;
-		result.push([ parseInt(indices[0])-1, parseInt(indices[1])-1, parseInt(indices[2])-1 ]);
+		var indices	= faces[i].indices;
+		verticesIndex.push([ parseInt(indices[0])-1, parseInt(indices[1])-1, parseInt(indices[2])-1 ]);
+		normalsIndex.push(parseInt(faces[i].normal)-1);
 	}
 
-	return result;
+	return [verticesIndex, normalsIndex];
 }
 
 function render() {
@@ -148,44 +168,72 @@ function render() {
 	// update camera rotation angle
 	camera.rotation = Date.now() * 0.0004;
 
-	if (model !== null) {
+	if (model !== null && animation !== null) {
 
-		if (animation !== null) {
+		var data = model.data;
+			
+		// Compute current animation state
+		var currentFrame = Math.floor(Date.now() * 0.02) % animation.length;
+		var currentFrameVertices = animation[currentFrame];
+		assert.isArray(currentFrameVertices);
+		assert.equal(currentFrameVertices.length, data.baseVertices.length);
 
-			var currentFrame = Math.floor(Date.now() * 0.02) % animation.length;
-			var currentFrameVertices = animation[currentFrame];
-			assert.isArray(currentFrameVertices);
-			assert.equal(currentFrameVertices.length, model.data.baseVertices.length);
-
-			// Stupidly inefficient but I won't recode this now :)
-			var data = model.data;
-			model.dispose();
-			model = Geom(gl).attr('position', currentFrameVertices).faces(data.faces);
-			model.data = data;
+		// Duplicate positions (see comments in onModelLoaded)
+		var positions = [];
+		for (var j=0; j<data.rawFaces.length; j++) {
+			var idx = data.rawFaces[j];
+			positions.push(currentFrameVertices[idx[0]]);
+			positions.push(currentFrameVertices[idx[1]]);
+			positions.push(currentFrameVertices[idx[2]]);
+		}
+		
+		// Compute normals per vertex
+		var faceNormals = computeNormals.faceNormals(data.faceIndices, positions);
+		var normals = [];
+		for (var k=0; k<data.rawFaces.length; k++) {
+			var faceNormal = faceNormals[k];
+			normals.push(faceNormal);
+			normals.push(faceNormal);
+			normals.push(faceNormal);
 		}
 
+		// Update model with animation data
+		// Stupidly inefficient but I won't recode this now :)
+		model.dispose();
+		model = Geom(gl).attr('position', positions).attr('normal', normals).faces(data.faceIndices);
+		model.data = data;
+
+		// Compute matrices
+		// See http://stackoverflow.com/a/21079741/38096
+		var view = camera.view();
+		var normalMatrix = mat4.create();
+		var temp = mat4.create();
+		mat4.invert(temp, view);
+		mat4.transpose(normalMatrix, temp);
+
+		// Set up shader
 		model.bind(shader);
 		shader.uniforms.proj = proj;
-		shader.uniforms.view = camera.view();
+		shader.uniforms.view = view;
+		shader.uniforms.normalMatrix = normalMatrix;
 
 		// Subdivide draw calls by material (we asked the obj exporter to sort faces accordingly)
-		var fmat = model.data.facesMaterials;
+		var fmat = data.facesMaterials;
 		for (var i=0; i<fmat.length; i++) {
 			var facesInfo = fmat[i];
 			var firstFace = facesInfo.materialStartIndex;
-			var nbFaces = ((i == fmat.length - 1) ? (model.data.faces.length) : fmat[i + 1].materialStartIndex) - firstFace;
+			var nbFaces = ((i == fmat.length - 1) ? (data.faceIndices.length) : fmat[i + 1].materialStartIndex) - firstFace;
 
-			var material = model.data.materials[facesInfo.materialName];
+			var material = data.materials[facesInfo.materialName];
 			var diffuse = material.diffuse;
 			var color = [ parseFloat(diffuse[0]), parseFloat(diffuse[1]), parseFloat(diffuse[2]) ];
-			shader.uniforms.color = color;
+			shader.uniforms.v_color = color;
 
 			// That was bloody painful to deduce from my strange rendering bugs
 			// See http://stackoverflow.com/questions/10221647/how-do-i-use-webgl-drawelements-offset
 			var start = firstFace * 3 * 2; // "2" is sizeof(uint16)
 			var stop = nbFaces * 3 + start;
 
-			//console.log('start:',start,'stop:',stop);
 			model.draw(gl.TRIANGLES, start, stop);
 		}
 

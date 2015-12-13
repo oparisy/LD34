@@ -138,3 +138,13 @@ Plutôt que de changer de shader, utiliser un uniform et profiter du fait que le
 Il y a un bug dans le chargeur de matériaux de obj-mtl-loader => le dernier matériau est perdu. Workaround : ajouter une ligne "newmtl dummy" à la fin du .mtl, TODO : logger une issue.
 
 Temps péniblement perdu sur la coloration des faces depuis les descriptions de matériaux : de multiples conversions + un bug à logguer dans gl-geometry
+
+Objectifs maintenant (dimanche, 18h) : upload normales, màj shader pour flat shading
+
+Ensuite brancher pour conserver cette démo, et réaliser jeu sur master
+
+Il faut dupliquer les normales puisqu'il y en a une par face à laquelle un vertex contribue
+Note : pas de données de normales dans le .pc2 => celles du .obj seront fausses => on les calcule
+
+Objectif atteint : rendu flat + animation
+

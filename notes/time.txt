@@ -23,3 +23,5 @@ Dimanche :
 12h50 : application animation .pc2 au modèle
 12h50 -> 14h30 : repas
 17h30 : couleur des faces OK
+17h30->18h : pause
+20h : calcul normales + shader flat

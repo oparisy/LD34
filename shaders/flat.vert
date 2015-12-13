@@ -1,9 +1,15 @@
 precision mediump float;
 
 attribute vec3 position;
+attribute vec3 normal;
+
+uniform mat4 normalMatrix;
 uniform mat4 proj;
 uniform mat4 view;
+
 uniform vec3 color;
+
+varying vec3 v_normal;
 
 void main() {
   gl_Position = (
@@ -11,4 +17,5 @@ void main() {
     view *
     vec4(position, 1.0)
   );
+  v_normal = (normalMatrix * vec4(normal, 1.0)).xyz;
 }
