@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
 	"lint": "jshint index.js lib/model.js",
-    "prestart": "browserify -d index.js -o bundle.js",
+    "prestart": "browserify index.js -o bundle.js",
     "start": "beefy index.js --live --open"
   },
   "devDependencies": {

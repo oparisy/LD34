@@ -159,3 +159,8 @@ Je viens de réaliser que le groupement par matériaux ne concerne que les faces
 J'arrive à afficher plusieurs instances, de plusieurs modèles
 
 Les apis vec3, mat4 etc. de stack.gl sont très pénibles (erreurs silencieuse, api pas claire) mais marchent bien
+
+Encore des bugs mais j'uploade via pages github :
+ * ajout d'un index.html minimal
+ * npm run prestart sans le -d pour limiter taille => gain d'un facteur 3
+ * test en local avec python -m SimpleHTTPServer => OK
