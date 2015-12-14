@@ -19,6 +19,7 @@ var glShader = require('gl-shader');
 var glslify  = require('glslify');
 var mat4    = require('gl-mat4');
 var vec3    = require('gl-vec3');
+var quat    = require('gl-quat');
 
 var createOrbitCamera = require("orbit-camera");
 var GPControls = require('gp-controls');
@@ -138,8 +139,11 @@ function render() {
 
 		gamepad.poll();
 		if (gamepad.enabled) {
+		
+			var padx = Math.abs(gamepad.inputs.x) < 0.25 ? 0 : gamepad.inputs.x;
+			var pady = Math.abs(gamepad.inputs.y) < 0.25 ? 0 : gamepad.inputs.y;
 			
-			var x=gamepad.inputs.x/(100*coef),y=gamepad.inputs.y/(100*coef);
+			var x=padx/(100*coef),y=pady/(100*coef);
 			camera.rotate([x,y], [0,0]);
 			lastx = x;
 			lasty = y;
@@ -161,29 +165,26 @@ function render() {
 					//vec3.set(dir, eye[0], eye[1], eye[2]);
 					var modelDir = vec3.create();
 					vec3.transformMat4(modelDir, dir, invView);
-					console.log('modelDir:', modelDir);
 					vec3.scale(modelDir, modelDir, -0.5);
 					
 					// Search for an intersection with a globe triangle
 					var data = globe.geom.data;
 					var faces = data.rawFaces;
 					var intersection = null;
+					var intersected;
 					for (var f=0; f<faces.length; f++) {
 						var i0 = faces[f][0], i1 = faces[f][1], i2 = faces[f][2];
-						//console.log('i0:',i0,'i1:',i1,'i2:',i2);
 						var tri = [ data.rawVertices[i0], data.rawVertices[i1], data.rawVertices[i2] ];
-						//console.log('pt:',pt);
-						//console.log('modelDir',modelDir);
-						//console.log('tri:',tri);
 						intersection = intersect([], pt, modelDir, tri);
 						if (intersection !== null) {
+						intersected = f;
 							break;
 						}
 					}
 					
 					if (intersection !== null) {
 						console.log('Intersection found:', intersection);
-						treePos.push({'pos': intersection, 'frame': 0});
+						treePos.push({'pos': intersection, 'intersected': intersected, 'frame': 0});
 					}
 				}
 			}
@@ -227,6 +228,9 @@ function render() {
 		
 		if (tree !== null && treePos.length > 0) {
 			
+			// No culling for trees since leaves are only one polygon wide
+			gl.disable(gl.CULL_FACE);
+
 			for (var tr=0; tr<treePos.length; tr++) {
 
 				var data = tree.geom.data;
@@ -271,26 +275,83 @@ function render() {
 				tree.geom.bind(shader);
 				shader.uniforms.proj = proj;
 				shader.uniforms.view = view;
-				shader.uniforms.normalMatrix = normalMatrix;
 
+				// Build a rotation matrix to rotate the tree such that it is aligned with the triangle normal
+				var triNormal = globe.geom.data.rawNormals[treePos[tr].intersected];
+				var normal = vec3.fromValues(triNormal[0], triNormal[1], triNormal[2]);
+				vec3.normalize(normal, normal);
+				
+				// Now that intersection point was computed, we do not take camera into account anymore;
+				// coordinates are expressed in the globe reference frame
+				// (which sits at the origin, untransformed)
+
+				// The intersection point (will be the base of the tree)
+				var vpos = vec3.fromValues(treePos[tr].pos[0], treePos[tr].pos[1], treePos[tr].pos[2]);
+
+				// Build a rotation matrix from the tree up vector to the vpos vector (the "local up")
+				var localUp = vec3.create();
+				vec3.normalize(localUp, vpos);
+				
+				// Should be the same computation as quat.rotationTo(couldn't get rotationTo to work)
+				// Source: http://forums.cgsociety.org/archive/index.php?t-741227.html
+				var z2 = vec3.fromValues(0,1,0); // y is up in Blender (for our tree anyway)
+				var z1 = normal; //localUp;
+				
+				var theRotAxis = vec3.create();
+				vec3.cross(theRotAxis, z2, z1);
+				vec3.normalize(theRotAxis, theRotAxis);
+				
+				var theAngle = Math.acos(vec3.dot(z2, z1));
+
+				var theQuat = quat.create();
+				quat.setAxisAngle(theQuat, theRotAxis, theAngle);
+				
+				var rot = mat4.create();
+				mat4.fromQuat(rot, theQuat);
+				
+				// Build a translation matrix to go from the origin to the intersection point
+				var translate = mat4.create();
+				mat4.translate(translate, translate, vpos);
+				
+				// Scale matrix (tree is too big wrt the globe)
+				var scale = mat4.create();
+				mat4.scale(scale, scale, vec3.fromValues(0.15,0.15,0.15));
+
+				// Compose transformations
 				var treeModel = mat4.create();
-				var posarr = treePos[tr].pos;
-				var vpos = vec3.create();
-				vec3.set(vpos, posarr[0], posarr[1], posarr[2]);
-				mat4.translate(treeModel, mat4.create(), vpos);
-				
-				// Scale the tree wrt the globe
-				mat4.scale(treeModel, treeModel, vec3.fromValues(0.15,0.15,0.15));
-				
+				mat4.multiply(treeModel, treeModel, translate);
+				mat4.multiply(treeModel, treeModel, rot);
+				mat4.multiply(treeModel, treeModel, scale);
+
+				// Draw using this model transformation
 				shader.uniforms.model = treeModel;
+				
+				// Since model matrix is not identity,
+				// normalMatrix must be recomputed for each tree
+				shader.uniforms.normalMatrix = computeNormalMatrix(view, treeModel);
+				
 				tree.draw(shader);
 
 				tree.geom.unbind();
 			}
+
+			gl.enable(gl.CULL_FACE);
 		}
 	}
 }
 
+function computeNormalMatrix(view, model) {
+	var viewModel = mat4.create();
+	mat4.multiply(viewModel, view, model);
+	
+	var temp = mat4.create();
+	mat4.invert(temp, viewModel);
+
+	var normalMatrix = mat4.create();
+	mat4.transpose(normalMatrix, temp);
+	return normalMatrix;
+}
+		
 function loadTree() {
 
 	var objLoader = new ObjMtlLoader();

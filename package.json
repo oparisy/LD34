@@ -25,6 +25,7 @@
 	"gl-clear": "2.0.0",
 	"gl-mat4": "1.1.4",
 	"gl-vec3": "1.0.3",
+	"gl-quat": "1.0.0",
 	"chai": "3.4.1",
 	"normals": "1.0.1",
 	"gp-controls": "0.0.0",
