@@ -145,6 +145,7 @@ Ensuite brancher pour conserver cette démo, et réaliser jeu sur master
 
 Il faut dupliquer les normales puisqu'il y en a une par face à laquelle un vertex contribue
 Note : pas de données de normales dans le .pc2 => celles du .obj seront fausses => on les calcule
+=> je découvre que j'aurais pu utiliser require('unindex-mesh')
 
 Objectif atteint : rendu flat + animation => création d'une branche animated-assets-demo
 
@@ -156,3 +157,5 @@ Je viens de réaliser que le groupement par matériaux ne concerne que les faces
 => il faudra faire mon propre "batcher"
 
 J'arrive à afficher plusieurs instances, de plusieurs modèles
+
+Les apis vec3, mat4 etc. de stack.gl sont très pénibles (erreurs silencieuse, api pas claire) mais marchent bien

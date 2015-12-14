@@ -28,7 +28,8 @@
 	"chai": "3.4.1",
 	"normals": "1.0.1",
 	"gp-controls": "0.0.0",
-	"orbit-camera": "1.0.0"
+	"orbit-camera": "1.0.0",
+	"ray-triangle-intersection": "1.0.3"
   },
   "browserify": {
     "transform": [

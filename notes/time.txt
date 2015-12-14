@@ -30,3 +30,4 @@ Dimanche :
 23h15 : gamepad + interaction avec caméra
 23h15->23h30 : pause
 00h30 : nuages
+02h00 : on peut planter des arbres. Trop grands. Avec le mauvais angle.
