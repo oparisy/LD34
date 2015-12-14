@@ -164,3 +164,5 @@ Encore des bugs mais j'uploade via pages github :
  * ajout d'un index.html minimal
  * npm run prestart sans le -d pour limiter taille => gain d'un facteur 3
  * test en local avec python -m SimpleHTTPServer => OK
+ * création branche : git branch gh-pages && git push origin gh-pages && git checkout gh-pages
+ * url : http://oparisy.github.io/LD34
