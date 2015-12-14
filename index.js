@@ -66,6 +66,7 @@ loadAssets();
 
 var tree;
 var animation;
+var animationLoaded = false;
 
 function loadAssets(globeLoaded) {
 
@@ -226,8 +227,8 @@ function render() {
 		}
 		cloud.geom.unbind();
 		
-		if (tree !== null && treePos.length > 0) {
-			
+		if (tree !== null && treePos.length > 0 && animationLoaded) {
+
 			// No culling for trees since leaves are only one polygon wide
 			gl.disable(gl.CULL_FACE);
 
@@ -236,13 +237,14 @@ function render() {
 				var data = tree.geom.data;
 
 				// Compute current animation state
-				var currentFrame = animation.length - 1;
-				/*
-				var currentFrame = treePos[tr].frame;//Math.floor(Date.now() * 0.02) % animation.length;
+				var currentFrame = Math.floor(treePos[tr].frame);
 				if (currentFrame < animation.length - 1) {
-					treePos[tr].frame++;
+					treePos[tr].frame += step * 0.02;
+				} else {
+					// Just to be on the safe side
+					currentFrame = animation.length - 1;
 				}
-				*/
+
 				var currentFrameVertices = animation[currentFrame];
 				assert.isArray(currentFrameVertices);
 				assert.equal(currentFrameVertices.length, data.baseVertices.length);
@@ -383,6 +385,8 @@ function loadTree() {
 				}
 				animation.push(frame);
 			}
+			
+			animationLoaded = true;
 		}
 	});
 
