@@ -279,6 +279,10 @@ function render() {
 				var vpos = vec3.create();
 				vec3.set(vpos, posarr[0], posarr[1], posarr[2]);
 				mat4.translate(treeModel, mat4.create(), vpos);
+				
+				// Scale the tree wrt the globe
+				mat4.scale(treeModel, treeModel, vec3.fromValues(0.15,0.15,0.15));
+				
 				shader.uniforms.model = treeModel;
 				tree.draw(shader);
 
