@@ -155,11 +155,14 @@ function render() {
 		// Keyboard
 		if (keyPressed("<left>")) {
 			padx = -1;
-		} else if (keyPressed("<right>")) {
+		}
+		if (keyPressed("<right>")) {
 			padx = +1;
-		} else if (keyPressed("<up>")) {
+		}
+		if (keyPressed("<up>")) {
 			pady = -1;
-		} else if (keyPressed("<down>")) {
+		}
+		if (keyPressed("<down>")) {
 			pady = +1;
 		}
 		plantPressed |= keyPressed("<space>");
