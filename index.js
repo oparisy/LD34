@@ -32,6 +32,7 @@ var gamepad = GPControls({
 	'<axis-left-y>': 'y',
 	'<action 1>': 'plant'
 });
+var keyPressed = require('key-pressed');
 
 // Creates a canvas element and attaches
 // it to the <body> on your DOM.
@@ -137,56 +138,74 @@ function render() {
 	if (globe !== null) {
 	
 		var view = camera.view();
+		
+		// Player actions
+		var plantPressed = false;
+		var padx = 0, pady = 0;
 
+		// Gamepad
 		gamepad.poll();
 		if (gamepad.enabled) {
-		
-			var padx = Math.abs(gamepad.inputs.x) < 0.25 ? 0 : gamepad.inputs.x;
-			var pady = Math.abs(gamepad.inputs.y) < 0.25 ? 0 : gamepad.inputs.y;
-			
-			var x=padx/(100*coef),y=pady/(100*coef);
-			camera.rotate([x,y], [0,0]);
-			lastx = x;
-			lasty = y;
-			
-			if (gamepad.inputs.plant.pressed) {
-			
-				// Not more than once per second
-				if (Date.now() - lastPlant > 500) {
-					lastPlant = Date.now();
+			padx = Math.abs(gamepad.inputs.x) < 0.25 ? 0 : gamepad.inputs.x;
+			pady = Math.abs(gamepad.inputs.y) < 0.25 ? 0 : gamepad.inputs.y;
+			plantPressed = gamepad.inputs.plant.pressed;
+		}
 
-					console.log('Plant!');
-					
-					var pt = [0, 0, 0];
-					
-					var invView = mat4.create();
-					mat4.invert(invView, view);
-					
-					var dir = vec3.create();
-					//vec3.set(dir, eye[0], eye[1], eye[2]);
-					var modelDir = vec3.create();
-					vec3.transformMat4(modelDir, dir, invView);
-					vec3.scale(modelDir, modelDir, -0.5);
-					
-					// Search for an intersection with a globe triangle
-					var data = globe.geom.data;
-					var faces = data.rawFaces;
-					var intersection = null;
-					var intersected;
-					for (var f=0; f<faces.length; f++) {
-						var i0 = faces[f][0], i1 = faces[f][1], i2 = faces[f][2];
-						var tri = [ data.rawVertices[i0], data.rawVertices[i1], data.rawVertices[i2] ];
-						intersection = intersect([], pt, modelDir, tri);
-						if (intersection !== null) {
-						intersected = f;
-							break;
-						}
-					}
-					
+		// Keyboard
+		if (keyPressed("<left>")) {
+			padx = -1;
+		} else if (keyPressed("<right>")) {
+			padx = +1;
+		} else if (keyPressed("<up>")) {
+			pady = -1;
+		} else if (keyPressed("<down>")) {
+			pady = +1;
+		}
+		plantPressed |= keyPressed("<space>");
+
+		// Animate camera
+		var x=padx/(100*coef),y=pady/(100*coef);
+		camera.rotate([x,y], [0,0]);
+		lastx = x;
+		lasty = y;
+		
+		if (plantPressed) {
+
+			// Not more than once per second
+			if (Date.now() - lastPlant > 500) {
+				lastPlant = Date.now();
+
+				console.log('Plant!');
+				
+				var pt = [0, 0, 0];
+				
+				var invView = mat4.create();
+				mat4.invert(invView, view);
+				
+				var dir = vec3.create();
+				//vec3.set(dir, eye[0], eye[1], eye[2]);
+				var modelDir = vec3.create();
+				vec3.transformMat4(modelDir, dir, invView);
+				vec3.scale(modelDir, modelDir, -0.5);
+				
+				// Search for an intersection with a globe triangle
+				var data = globe.geom.data;
+				var faces = data.rawFaces;
+				var intersection = null;
+				var intersected;
+				for (var f=0; f<faces.length; f++) {
+					var i0 = faces[f][0], i1 = faces[f][1], i2 = faces[f][2];
+					var tri = [ data.rawVertices[i0], data.rawVertices[i1], data.rawVertices[i2] ];
+					intersection = intersect([], pt, modelDir, tri);
 					if (intersection !== null) {
-						console.log('Intersection found:', intersection);
-						treePos.push({'pos': intersection, 'intersected': intersected, 'frame': 0});
+					intersected = f;
+						break;
 					}
+				}
+				
+				if (intersection !== null) {
+					console.log('Intersection found:', intersection);
+					treePos.push({'pos': intersection, 'intersected': intersected, 'frame': 0});
 				}
 			}
 		}

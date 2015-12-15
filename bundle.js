@@ -33,6 +33,7 @@ var gamepad = GPControls({
 	'<axis-left-y>': 'y',
 	'<action 1>': 'plant'
 });
+var keyPressed = require('key-pressed');
 
 // Creates a canvas element and attaches
 // it to the <body> on your DOM.
@@ -138,56 +139,74 @@ function render() {
 	if (globe !== null) {
 	
 		var view = camera.view();
+		
+		// Player actions
+		var plantPressed = false;
+		var padx = 0, pady = 0;
 
+		// Gamepad
 		gamepad.poll();
 		if (gamepad.enabled) {
-		
-			var padx = Math.abs(gamepad.inputs.x) < 0.25 ? 0 : gamepad.inputs.x;
-			var pady = Math.abs(gamepad.inputs.y) < 0.25 ? 0 : gamepad.inputs.y;
-			
-			var x=padx/(100*coef),y=pady/(100*coef);
-			camera.rotate([x,y], [0,0]);
-			lastx = x;
-			lasty = y;
-			
-			if (gamepad.inputs.plant.pressed) {
-			
-				// Not more than once per second
-				if (Date.now() - lastPlant > 500) {
-					lastPlant = Date.now();
+			padx = Math.abs(gamepad.inputs.x) < 0.25 ? 0 : gamepad.inputs.x;
+			pady = Math.abs(gamepad.inputs.y) < 0.25 ? 0 : gamepad.inputs.y;
+			plantPressed = gamepad.inputs.plant.pressed;
+		}
 
-					console.log('Plant!');
-					
-					var pt = [0, 0, 0];
-					
-					var invView = mat4.create();
-					mat4.invert(invView, view);
-					
-					var dir = vec3.create();
-					//vec3.set(dir, eye[0], eye[1], eye[2]);
-					var modelDir = vec3.create();
-					vec3.transformMat4(modelDir, dir, invView);
-					vec3.scale(modelDir, modelDir, -0.5);
-					
-					// Search for an intersection with a globe triangle
-					var data = globe.geom.data;
-					var faces = data.rawFaces;
-					var intersection = null;
-					var intersected;
-					for (var f=0; f<faces.length; f++) {
-						var i0 = faces[f][0], i1 = faces[f][1], i2 = faces[f][2];
-						var tri = [ data.rawVertices[i0], data.rawVertices[i1], data.rawVertices[i2] ];
-						intersection = intersect([], pt, modelDir, tri);
-						if (intersection !== null) {
-						intersected = f;
-							break;
-						}
-					}
-					
+		// Keyboard
+		if (keyPressed("<left>")) {
+			padx = -1;
+		} else if (keyPressed("<right>")) {
+			padx = +1;
+		} else if (keyPressed("<up>")) {
+			pady = -1;
+		} else if (keyPressed("<down>")) {
+			pady = +1;
+		}
+		plantPressed |= keyPressed("<space>");
+
+		// Animate camera
+		var x=padx/(100*coef),y=pady/(100*coef);
+		camera.rotate([x,y], [0,0]);
+		lastx = x;
+		lasty = y;
+		
+		if (plantPressed) {
+
+			// Not more than once per second
+			if (Date.now() - lastPlant > 500) {
+				lastPlant = Date.now();
+
+				console.log('Plant!');
+				
+				var pt = [0, 0, 0];
+				
+				var invView = mat4.create();
+				mat4.invert(invView, view);
+				
+				var dir = vec3.create();
+				//vec3.set(dir, eye[0], eye[1], eye[2]);
+				var modelDir = vec3.create();
+				vec3.transformMat4(modelDir, dir, invView);
+				vec3.scale(modelDir, modelDir, -0.5);
+				
+				// Search for an intersection with a globe triangle
+				var data = globe.geom.data;
+				var faces = data.rawFaces;
+				var intersection = null;
+				var intersected;
+				for (var f=0; f<faces.length; f++) {
+					var i0 = faces[f][0], i1 = faces[f][1], i2 = faces[f][2];
+					var tri = [ data.rawVertices[i0], data.rawVertices[i1], data.rawVertices[i2] ];
+					intersection = intersect([], pt, modelDir, tri);
 					if (intersection !== null) {
-						console.log('Intersection found:', intersection);
-						treePos.push({'pos': intersection, 'intersected': intersected, 'frame': 0});
+					intersected = f;
+						break;
 					}
+				}
+				
+				if (intersection !== null) {
+					console.log('Intersection found:', intersection);
+					treePos.push({'pos': intersection, 'intersected': intersected, 'frame': 0});
 				}
 			}
 		}
@@ -406,7 +425,7 @@ function loadTree() {
 		pc2Loader.write(dataBuffer);
 	});
 }
-},{"./lib/model":2,"./lib/parse-pc2/index":3,"arraybuffer-to-buffer":68,"canvas-fit":76,"chai":77,"gl-clear":122,"gl-context":125,"gl-geometry":127,"gl-mat4":139,"gl-quat":174,"gl-shader":191,"gl-vec3":212,"gp-controls":252,"normals":264,"obj-mtl-loader":265,"orbit-camera":268,"ray-triangle-intersection":273,"turntable-camera":292,"xhr-request":303}],2:[function(require,module,exports){
+},{"./lib/model":2,"./lib/parse-pc2/index":3,"arraybuffer-to-buffer":68,"canvas-fit":76,"chai":77,"gl-clear":122,"gl-context":125,"gl-geometry":127,"gl-mat4":139,"gl-quat":174,"gl-shader":191,"gl-vec3":212,"gp-controls":252,"key-pressed":262,"normals":266,"obj-mtl-loader":267,"orbit-camera":270,"ray-triangle-intersection":275,"turntable-camera":294,"xhr-request":305}],2:[function(require,module,exports){
 /* jshint node: true */
 /* jshint browser:true */
 "use strict";
@@ -565,7 +584,7 @@ function convertFaces(faces) {
 }
 
 module.exports = Model;
-},{"chai":77,"gl-geometry":127,"normals":264}],3:[function(require,module,exports){
+},{"chai":77,"gl-geometry":127,"normals":266}],3:[function(require,module,exports){
 /* jshint node: true */
 "use strict";
 
@@ -627,7 +646,7 @@ function checkEqual(varName, expected) {
 
 // Usage: var parser = new require('parse-pc2')();
 module.exports = PC2Parser;
-},{"chai":6,"dissolve":40,"util":299}],4:[function(require,module,exports){
+},{"chai":6,"dissolve":40,"util":301}],4:[function(require,module,exports){
 /*!
  * assertion-error
  * Copyright(c) 2013 Jake Luer <jake@qualiancy.com>
@@ -952,7 +971,7 @@ BufferList.prototype.duplicate = function () {
 module.exports = BufferList
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":75,"readable-stream":50,"util":299}],6:[function(require,module,exports){
+},{"buffer":75,"readable-stream":50,"util":301}],6:[function(require,module,exports){
 module.exports = require('./lib/chai');
 
 },{"./lib/chai":7}],7:[function(require,module,exports){
@@ -8112,7 +8131,7 @@ function indexOf (xs, x) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_duplex":44,"_process":74,"buffer":75,"core-util-is":35,"events":117,"inherits":41,"isarray":42,"stream":287,"string_decoder/":61,"util":73}],47:[function(require,module,exports){
+},{"./_stream_duplex":44,"_process":74,"buffer":75,"core-util-is":35,"events":117,"inherits":41,"isarray":42,"stream":289,"string_decoder/":61,"util":73}],47:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -8804,7 +8823,7 @@ function endWritable(stream, state, cb) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_duplex":44,"_process":74,"buffer":75,"core-util-is":35,"inherits":41,"stream":287}],49:[function(require,module,exports){
+},{"./_stream_duplex":44,"_process":74,"buffer":75,"core-util-is":35,"inherits":41,"stream":289}],49:[function(require,module,exports){
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Stream = require('stream');
 exports.Readable = exports;
@@ -8813,7 +8832,7 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":44,"./lib/_stream_passthrough.js":45,"./lib/_stream_readable.js":46,"./lib/_stream_transform.js":47,"./lib/_stream_writable.js":48,"stream":287}],50:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":44,"./lib/_stream_passthrough.js":45,"./lib/_stream_readable.js":46,"./lib/_stream_transform.js":47,"./lib/_stream_writable.js":48,"stream":289}],50:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -11236,7 +11255,7 @@ function addLineNumbers (string, start, delim) {
   }).join('\n')
 }
 
-},{"pad-left":269}],66:[function(require,module,exports){
+},{"pad-left":271}],66:[function(require,module,exports){
 var dtype = require('dtype')
 
 module.exports = pack
@@ -12865,7 +12884,7 @@ module.exports=require(15)
 module.exports=require(16)
 },{"../config":80,"./flag":89,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\addProperty.js":16}],88:[function(require,module,exports){
 module.exports=require(17)
-},{"./flag":89,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\expectTypes.js":17,"assertion-error":69,"type-detect":293}],89:[function(require,module,exports){
+},{"./flag":89,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\expectTypes.js":17,"assertion-error":69,"type-detect":295}],89:[function(require,module,exports){
 module.exports=require(18)
 },{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\flag.js":18}],90:[function(require,module,exports){
 module.exports=require(19)
@@ -12883,9 +12902,9 @@ module.exports=require(24)
 module.exports=require(25)
 },{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\getProperties.js":25}],97:[function(require,module,exports){
 module.exports=require(26)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\hasProperty.js":26,"type-detect":293}],98:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\hasProperty.js":26,"type-detect":295}],98:[function(require,module,exports){
 module.exports=require(27)
-},{"./addChainableMethod":85,"./addMethod":86,"./addProperty":87,"./expectTypes":88,"./flag":89,"./getActual":90,"./getMessage":92,"./getName":93,"./getPathInfo":94,"./getPathValue":95,"./hasProperty":97,"./inspect":99,"./objDisplay":100,"./overwriteChainableMethod":101,"./overwriteMethod":102,"./overwriteProperty":103,"./test":104,"./transferFlags":105,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\index.js":27,"deep-eql":110,"type-detect":293}],99:[function(require,module,exports){
+},{"./addChainableMethod":85,"./addMethod":86,"./addProperty":87,"./expectTypes":88,"./flag":89,"./getActual":90,"./getMessage":92,"./getName":93,"./getPathInfo":94,"./getPathValue":95,"./hasProperty":97,"./inspect":99,"./objDisplay":100,"./overwriteChainableMethod":101,"./overwriteMethod":102,"./overwriteProperty":103,"./test":104,"./transferFlags":105,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\index.js":27,"deep-eql":110,"type-detect":295}],99:[function(require,module,exports){
 module.exports=require(28)
 },{"./getEnumerableProperties":91,"./getName":93,"./getProperties":96,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\inspect.js":28}],100:[function(require,module,exports){
 module.exports=require(29)
@@ -13477,7 +13496,7 @@ function generateCWiseOp(proc, typesig) {
 }
 module.exports = generateCWiseOp
 
-},{"uniq":296}],109:[function(require,module,exports){
+},{"uniq":298}],109:[function(require,module,exports){
 "use strict"
 
 // The function below is called when constructing a cwise function object, and does the following:
@@ -14215,7 +14234,7 @@ function createBuffer(gl, data, type, usage) {
 
 module.exports = createBuffer
 
-},{"ndarray":263,"ndarray-ops":262,"typedarray-pool":295}],121:[function(require,module,exports){
+},{"ndarray":265,"ndarray-ops":264,"typedarray-pool":297}],121:[function(require,module,exports){
 exports.color = function(color) {
   return array(color, [0, 0, 0, 1])
 }
@@ -14636,7 +14655,7 @@ function createContext(canvas, opts, render) {
   }
 }
 
-},{"raf-component":272}],126:[function(require,module,exports){
+},{"raf-component":274}],126:[function(require,module,exports){
 
 var sprintf = require('sprintf-js').sprintf;
 var glConstants = require('gl-constants/lookup');
@@ -14691,7 +14710,7 @@ function formatCompilerError(errLog, src, type) {
 }
 
 
-},{"add-line-numbers":65,"gl-constants/lookup":124,"glsl-shader-name":246,"sprintf-js":286}],127:[function(require,module,exports){
+},{"add-line-numbers":65,"gl-constants/lookup":124,"glsl-shader-name":246,"sprintf-js":288}],127:[function(require,module,exports){
 var normalize = require('./normalize')
 var createVAO = require('gl-vao')
 
@@ -22374,7 +22393,7 @@ function createProgram(gl, vref, fref, attribs, locations) {
   return getCache(gl).getProgram(vref, fref, attribs, locations)
 }
 
-},{"gl-format-compiler-error":126,"weakmap-shim":302}],197:[function(require,module,exports){
+},{"gl-format-compiler-error":126,"weakmap-shim":304}],197:[function(require,module,exports){
 "use strict"
 
 function doBind(gl, elements, attributes) {
@@ -24459,6 +24478,181 @@ module.exports = function(arr) {
 }
 
 },{}],262:[function(require,module,exports){
+(function (process){
+var keys = require('vkey')
+var list = Object.keys(keys)
+var down = {}
+
+reset()
+
+module.exports = pressed
+
+if (process.browser) {
+  window.addEventListener('keydown', keydown, false)
+  window.addEventListener('keyup', keyup, false)
+  window.addEventListener('blur', reset, false)
+}
+
+function pressed(key) {
+  return key
+    ? down[key]
+    : down
+}
+
+function reset() {
+  list.forEach(function(code) {
+    down[keys[code]] = false
+  })
+}
+
+function keyup(e) {
+  down[keys[e.keyCode]] = false
+}
+
+function keydown(e) {
+  down[keys[e.keyCode]] = true
+}
+
+}).call(this,require('_process'))
+},{"_process":74,"vkey":263}],263:[function(require,module,exports){
+var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
+  , isOSX = /OS X/.test(ua)
+  , isOpera = /Opera/.test(ua)
+  , maybeFirefox = !/like Gecko/.test(ua) && !isOpera
+
+var i, output = module.exports = {
+  0:  isOSX ? '<menu>' : '<UNK>'
+, 1:  '<mouse 1>'
+, 2:  '<mouse 2>'
+, 3:  '<break>'
+, 4:  '<mouse 3>'
+, 5:  '<mouse 4>'
+, 6:  '<mouse 5>'
+, 8:  '<backspace>'
+, 9:  '<tab>'
+, 12: '<clear>'
+, 13: '<enter>'
+, 16: '<shift>'
+, 17: '<control>'
+, 18: '<alt>'
+, 19: '<pause>'
+, 20: '<caps-lock>'
+, 21: '<ime-hangul>'
+, 23: '<ime-junja>'
+, 24: '<ime-final>'
+, 25: '<ime-kanji>'
+, 27: '<escape>'
+, 28: '<ime-convert>'
+, 29: '<ime-nonconvert>'
+, 30: '<ime-accept>'
+, 31: '<ime-mode-change>'
+, 27: '<escape>'
+, 32: '<space>'
+, 33: '<page-up>'
+, 34: '<page-down>'
+, 35: '<end>'
+, 36: '<home>'
+, 37: '<left>'
+, 38: '<up>'
+, 39: '<right>'
+, 40: '<down>'
+, 41: '<select>'
+, 42: '<print>'
+, 43: '<execute>'
+, 44: '<snapshot>'
+, 45: '<insert>'
+, 46: '<delete>'
+, 47: '<help>'
+, 91: '<meta>'  // meta-left -- no one handles left and right properly, so we coerce into one.
+, 92: '<meta>'  // meta-right
+, 93: isOSX ? '<meta>' : '<menu>'      // chrome,opera,safari all report this for meta-right (osx mbp).
+, 95: '<sleep>'
+, 106: '<num-*>'
+, 107: '<num-+>'
+, 108: '<num-enter>'
+, 109: '<num-->'
+, 110: '<num-.>'
+, 111: '<num-/>'
+, 144: '<num-lock>'
+, 145: '<scroll-lock>'
+, 160: '<shift-left>'
+, 161: '<shift-right>'
+, 162: '<control-left>'
+, 163: '<control-right>'
+, 164: '<alt-left>'
+, 165: '<alt-right>'
+, 166: '<browser-back>'
+, 167: '<browser-forward>'
+, 168: '<browser-refresh>'
+, 169: '<browser-stop>'
+, 170: '<browser-search>'
+, 171: '<browser-favorites>'
+, 172: '<browser-home>'
+
+  // ff/osx reports '<volume-mute>' for '-'
+, 173: isOSX && maybeFirefox ? '-' : '<volume-mute>'
+, 174: '<volume-down>'
+, 175: '<volume-up>'
+, 176: '<next-track>'
+, 177: '<prev-track>'
+, 178: '<stop>'
+, 179: '<play-pause>'
+, 180: '<launch-mail>'
+, 181: '<launch-media-select>'
+, 182: '<launch-app 1>'
+, 183: '<launch-app 2>'
+, 186: ';'
+, 187: '='
+, 188: ','
+, 189: '-'
+, 190: '.'
+, 191: '/'
+, 192: '`'
+, 219: '['
+, 220: '\\'
+, 221: ']'
+, 222: "'"
+, 223: '<meta>'
+, 224: '<meta>'       // firefox reports meta here.
+, 226: '<alt-gr>'
+, 229: '<ime-process>'
+, 231: isOpera ? '`' : '<unicode>'
+, 246: '<attention>'
+, 247: '<crsel>'
+, 248: '<exsel>'
+, 249: '<erase-eof>'
+, 250: '<play>'
+, 251: '<zoom>'
+, 252: '<no-name>'
+, 253: '<pa-1>'
+, 254: '<clear>'
+}
+
+for(i = 58; i < 65; ++i) {
+  output[i] = String.fromCharCode(i)
+}
+
+// 0-9
+for(i = 48; i < 58; ++i) {
+  output[i] = (i - 48)+''
+}
+
+// A-Z
+for(i = 65; i < 91; ++i) {
+  output[i] = String.fromCharCode(i)
+}
+
+// num0-9
+for(i = 96; i < 106; ++i) {
+  output[i] = '<num-'+(i - 96)+'>'
+}
+
+// F1-F24
+for(i = 112; i < 136; ++i) {
+  output[i] = 'F'+(i-111)
+}
+
+},{}],264:[function(require,module,exports){
 "use strict"
 
 var compile = require("cwise-compiler")
@@ -24921,7 +25115,7 @@ exports.equals = compile({
 
 
 
-},{"cwise-compiler":107}],263:[function(require,module,exports){
+},{"cwise-compiler":107}],265:[function(require,module,exports){
 var iota = require("iota-array")
 var isBuffer = require("is-buffer")
 
@@ -25266,7 +25460,7 @@ function wrappedNDArrayCtor(data, shape, stride, offset) {
 
 module.exports = wrappedNDArrayCtor
 
-},{"iota-array":255,"is-buffer":257}],264:[function(require,module,exports){
+},{"iota-array":255,"is-buffer":257}],266:[function(require,module,exports){
 var EPSILON = 1e-6;
 
 //Estimate the vertex normals of a mesh
@@ -25387,7 +25581,7 @@ exports.faceNormals = function(faces, positions) {
 
 
 
-},{}],265:[function(require,module,exports){
+},{}],267:[function(require,module,exports){
 var stream = require('stream');
 var split = require('split');
 var xhr = require('xhr');
@@ -25638,7 +25832,7 @@ ObjLoader.prototype.parseMtl = function(line, currentMat) {
 
 module.exports = ObjLoader;
 
-},{"split":285,"stream":287,"xhr":307}],266:[function(require,module,exports){
+},{"split":287,"stream":289,"xhr":309}],268:[function(require,module,exports){
 'use strict';
 var propIsEnumerable = Object.prototype.propertyIsEnumerable;
 
@@ -25679,7 +25873,7 @@ module.exports = Object.assign || function (target, source) {
 	return to;
 };
 
-},{}],267:[function(require,module,exports){
+},{}],269:[function(require,module,exports){
 module.exports = once
 
 once.proto = once(function () {
@@ -25700,7 +25894,7 @@ function once (fn) {
   }
 }
 
-},{}],268:[function(require,module,exports){
+},{}],270:[function(require,module,exports){
 "use strict"
 
 var glm = require("gl-matrix")
@@ -25795,7 +25989,7 @@ function createOrbitCamera(eye, target, up) {
 
 module.exports = createOrbitCamera
 
-},{"gl-matrix":154}],269:[function(require,module,exports){
+},{"gl-matrix":154}],271:[function(require,module,exports){
 /*!
  * pad-left <https://github.com/jonschlinkert/pad-left>
  *
@@ -25811,7 +26005,7 @@ module.exports = function padLeft(str, num, ch) {
   ch = typeof ch !== 'undefined' ? (ch + '') : ' ';
   return repeat(ch, num) + str;
 };
-},{"repeat-string":284}],270:[function(require,module,exports){
+},{"repeat-string":286}],272:[function(require,module,exports){
 var trim = require('trim')
   , forEach = require('for-each')
   , isArray = function(arg) {
@@ -25843,7 +26037,7 @@ module.exports = function (headers) {
 
   return result
 }
-},{"for-each":118,"trim":291}],271:[function(require,module,exports){
+},{"for-each":118,"trim":293}],273:[function(require,module,exports){
 'use strict';
 var strictUriEncode = require('strict-uri-encode');
 
@@ -25903,7 +26097,7 @@ exports.stringify = function (obj) {
 	}).join('&') : '';
 };
 
-},{"strict-uri-encode":288}],272:[function(require,module,exports){
+},{"strict-uri-encode":290}],274:[function(require,module,exports){
 /**
  * Expose `requestAnimationFrame()`.
  */
@@ -25943,7 +26137,7 @@ exports.cancel = function(id){
   cancel.call(window, id);
 };
 
-},{}],273:[function(require,module,exports){
+},{}],275:[function(require,module,exports){
 var cross = require('gl-vec3/cross');
 var dot = require('gl-vec3/dot');
 var sub = require('gl-vec3/subtract');
@@ -25979,13 +26173,13 @@ function intersectTriangle (out, pt, dir, tri) {
     return out;
 }
 
-},{"gl-vec3/cross":206,"gl-vec3/dot":209,"gl-vec3/subtract":230}],274:[function(require,module,exports){
+},{"gl-vec3/cross":206,"gl-vec3/dot":209,"gl-vec3/subtract":230}],276:[function(require,module,exports){
 arguments[4][51][0].apply(exports,arguments)
-},{"./lib/_stream_duplex.js":275,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\node_modules\\readable-stream\\duplex.js":51}],275:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":277,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\node_modules\\readable-stream\\duplex.js":51}],277:[function(require,module,exports){
 arguments[4][44][0].apply(exports,arguments)
-},{"./_stream_readable":277,"./_stream_writable":279,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\readable-stream\\lib\\_stream_duplex.js":44,"_process":74,"core-util-is":106,"inherits":254}],276:[function(require,module,exports){
+},{"./_stream_readable":279,"./_stream_writable":281,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\readable-stream\\lib\\_stream_duplex.js":44,"_process":74,"core-util-is":106,"inherits":254}],278:[function(require,module,exports){
 arguments[4][45][0].apply(exports,arguments)
-},{"./_stream_transform":278,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\readable-stream\\lib\\_stream_passthrough.js":45,"core-util-is":106,"inherits":254}],277:[function(require,module,exports){
+},{"./_stream_transform":280,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\readable-stream\\lib\\_stream_passthrough.js":45,"core-util-is":106,"inherits":254}],279:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -26971,7 +27165,7 @@ function indexOf (xs, x) {
 }
 
 }).call(this,require('_process'))
-},{"_process":74,"buffer":75,"core-util-is":106,"events":117,"inherits":254,"isarray":260,"stream":287,"string_decoder/":289}],278:[function(require,module,exports){
+},{"_process":74,"buffer":75,"core-util-is":106,"events":117,"inherits":254,"isarray":260,"stream":289,"string_decoder/":291}],280:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -27183,7 +27377,7 @@ function done(stream, er) {
   return stream.push(null);
 }
 
-},{"./_stream_duplex":275,"core-util-is":106,"inherits":254}],279:[function(require,module,exports){
+},{"./_stream_duplex":277,"core-util-is":106,"inherits":254}],281:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -27573,9 +27767,9 @@ function endWritable(stream, state, cb) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_duplex":275,"_process":74,"buffer":75,"core-util-is":106,"inherits":254,"stream":287}],280:[function(require,module,exports){
+},{"./_stream_duplex":277,"_process":74,"buffer":75,"core-util-is":106,"inherits":254,"stream":289}],282:[function(require,module,exports){
 arguments[4][57][0].apply(exports,arguments)
-},{"./lib/_stream_passthrough.js":276,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\node_modules\\readable-stream\\passthrough.js":57}],281:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":278,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\node_modules\\readable-stream\\passthrough.js":57}],283:[function(require,module,exports){
 var Stream = require('stream'); // hack to fix a circular dependency issue when used with browserify
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Stream = Stream;
@@ -27585,11 +27779,11 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":275,"./lib/_stream_passthrough.js":276,"./lib/_stream_readable.js":277,"./lib/_stream_transform.js":278,"./lib/_stream_writable.js":279,"stream":287}],282:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":277,"./lib/_stream_passthrough.js":278,"./lib/_stream_readable.js":279,"./lib/_stream_transform.js":280,"./lib/_stream_writable.js":281,"stream":289}],284:[function(require,module,exports){
 arguments[4][59][0].apply(exports,arguments)
-},{"./lib/_stream_transform.js":278,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\node_modules\\readable-stream\\transform.js":59}],283:[function(require,module,exports){
+},{"./lib/_stream_transform.js":280,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\node_modules\\readable-stream\\transform.js":59}],285:[function(require,module,exports){
 arguments[4][60][0].apply(exports,arguments)
-},{"./lib/_stream_writable.js":279,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\node_modules\\readable-stream\\writable.js":60}],284:[function(require,module,exports){
+},{"./lib/_stream_writable.js":281,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\node_modules\\readable-stream\\writable.js":60}],286:[function(require,module,exports){
 /*!
  * repeat-string <https://github.com/jonschlinkert/repeat-string>
  *
@@ -27657,7 +27851,7 @@ function repeat(str, num) {
 var res = '';
 var cache;
 
-},{}],285:[function(require,module,exports){
+},{}],287:[function(require,module,exports){
 //filter will reemit the data if cb(err,pass) pass is truthy
 
 // reduce is more tricky
@@ -27722,7 +27916,7 @@ function split (matcher, mapper, options) {
 }
 
 
-},{"string_decoder":289,"through":290}],286:[function(require,module,exports){
+},{"string_decoder":291,"through":292}],288:[function(require,module,exports){
 (function(window) {
     var re = {
         not_string: /[^s]/,
@@ -27932,9 +28126,9 @@ function split (matcher, mapper, options) {
     }
 })(typeof window === "undefined" ? this : window);
 
-},{}],287:[function(require,module,exports){
+},{}],289:[function(require,module,exports){
 arguments[4][50][0].apply(exports,arguments)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\index.js":50,"events":117,"inherits":254,"readable-stream/duplex.js":274,"readable-stream/passthrough.js":280,"readable-stream/readable.js":281,"readable-stream/transform.js":282,"readable-stream/writable.js":283}],288:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\index.js":50,"events":117,"inherits":254,"readable-stream/duplex.js":276,"readable-stream/passthrough.js":282,"readable-stream/readable.js":283,"readable-stream/transform.js":284,"readable-stream/writable.js":285}],290:[function(require,module,exports){
 'use strict';
 module.exports = function (str) {
 	return encodeURIComponent(str).replace(/[!'()*]/g, function (c) {
@@ -27942,9 +28136,9 @@ module.exports = function (str) {
 	});
 };
 
-},{}],289:[function(require,module,exports){
+},{}],291:[function(require,module,exports){
 module.exports=require(61)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\string_decoder\\index.js":61,"buffer":75}],290:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\string_decoder\\index.js":61,"buffer":75}],292:[function(require,module,exports){
 (function (process){
 var Stream = require('stream')
 
@@ -28056,7 +28250,7 @@ function through (write, end, opts) {
 
 
 }).call(this,require('_process'))
-},{"_process":74,"stream":287}],291:[function(require,module,exports){
+},{"_process":74,"stream":289}],293:[function(require,module,exports){
 
 exports = module.exports = trim;
 
@@ -28072,7 +28266,7 @@ exports.right = function(str){
   return str.replace(/\s*$/, '');
 };
 
-},{}],292:[function(require,module,exports){
+},{}],294:[function(require,module,exports){
 var mat4 = require('gl-mat4')
 
 module.exports = TurntableCamera
@@ -28107,11 +28301,11 @@ TurntableCamera.prototype.view = function(data) {
   return data
 }
 
-},{"gl-mat4":139}],293:[function(require,module,exports){
+},{"gl-mat4":139}],295:[function(require,module,exports){
 arguments[4][38][0].apply(exports,arguments)
-},{"./lib/type":294,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\deep-eql\\node_modules\\type-detect\\index.js":38}],294:[function(require,module,exports){
+},{"./lib/type":296,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\deep-eql\\node_modules\\type-detect\\index.js":38}],296:[function(require,module,exports){
 module.exports=require(63)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\type-detect\\lib\\type.js":63}],295:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\type-detect\\lib\\type.js":63}],297:[function(require,module,exports){
 (function (global,Buffer){
 'use strict'
 
@@ -28328,7 +28522,7 @@ exports.clearCache = function clearCache() {
   }
 }
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"bit-twiddle":72,"buffer":75,"dup":115}],296:[function(require,module,exports){
+},{"bit-twiddle":72,"buffer":75,"dup":115}],298:[function(require,module,exports){
 "use strict"
 
 function unique_pred(list, compare) {
@@ -28387,7 +28581,7 @@ function unique(list, compare, sorted) {
 
 module.exports = unique
 
-},{}],297:[function(require,module,exports){
+},{}],299:[function(require,module,exports){
 module.exports = urlSetQuery
 function urlSetQuery (url, query) {
   if (query) {
@@ -28412,14 +28606,14 @@ function urlSetQuery (url, query) {
   return url
 }
 
-},{}],298:[function(require,module,exports){
+},{}],300:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],299:[function(require,module,exports){
+},{}],301:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -29009,7 +29203,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":298,"_process":74,"inherits":254}],300:[function(require,module,exports){
+},{"./support/isBuffer":300,"_process":74,"inherits":254}],302:[function(require,module,exports){
 var hiddenStore = require('./hidden-store.js');
 
 module.exports = createStore;
@@ -29030,7 +29224,7 @@ function createStore() {
     };
 }
 
-},{"./hidden-store.js":301}],301:[function(require,module,exports){
+},{"./hidden-store.js":303}],303:[function(require,module,exports){
 module.exports = hiddenStore;
 
 function hiddenStore(obj, key) {
@@ -29048,7 +29242,7 @@ function hiddenStore(obj, key) {
     return store;
 }
 
-},{}],302:[function(require,module,exports){
+},{}],304:[function(require,module,exports){
 // Original - @Gozola. 
 // https://gist.github.com/Gozala/1269991
 // This is a reimplemented version (with a few bug fixes).
@@ -29078,7 +29272,7 @@ function weakMap() {
     }
 }
 
-},{"./create-store.js":300}],303:[function(require,module,exports){
+},{"./create-store.js":302}],305:[function(require,module,exports){
 var queryString = require('query-string')
 var setQuery = require('url-set-query')
 var assign = require('object-assign')
@@ -29139,7 +29333,7 @@ function xhrRequest (url, opt, cb) {
   return request(opt, cb)
 }
 
-},{"./lib/ensure-header.js":304,"./lib/request.js":306,"object-assign":266,"query-string":271,"url-set-query":297}],304:[function(require,module,exports){
+},{"./lib/ensure-header.js":306,"./lib/request.js":308,"object-assign":268,"query-string":273,"url-set-query":299}],306:[function(require,module,exports){
 module.exports = ensureHeader
 function ensureHeader (headers, key, value) {
   var lower = key.toLowerCase()
@@ -29148,7 +29342,7 @@ function ensureHeader (headers, key, value) {
   }
 }
 
-},{}],305:[function(require,module,exports){
+},{}],307:[function(require,module,exports){
 module.exports = getResponse
 function getResponse (opt, resp) {
   if (!resp) return null
@@ -29162,7 +29356,7 @@ function getResponse (opt, resp) {
   }
 }
 
-},{}],306:[function(require,module,exports){
+},{}],308:[function(require,module,exports){
 var xhr = require('xhr')
 var normalize = require('./normalize-response')
 
@@ -29193,7 +29387,7 @@ function xhrRequest (opt, cb) {
   })
 }
 
-},{"./normalize-response":305,"xhr":307}],307:[function(require,module,exports){
+},{"./normalize-response":307,"xhr":309}],309:[function(require,module,exports){
 "use strict";
 var window = require("global/window")
 var once = require("once")
@@ -29414,7 +29608,7 @@ function _createXHR(options) {
 
 function noop() {}
 
-},{"global/window":245,"is-function":258,"once":267,"parse-headers":270,"xtend":308}],308:[function(require,module,exports){
+},{"global/window":245,"is-function":258,"once":269,"parse-headers":272,"xtend":310}],310:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
