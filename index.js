@@ -12,7 +12,6 @@ var assert = require('chai').assert;
 var glContext   = require('gl-context');
 var fit         = require('canvas-fit');
 var fs          = require('fs');
-var turntableCamera = require('turntable-camera');
 var Geom    = require('gl-geometry');
 var glClear   = require('gl-clear');
 var glShader = require('gl-shader');
