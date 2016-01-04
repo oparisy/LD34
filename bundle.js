@@ -13,7 +13,6 @@ var assert = require('chai').assert;
 var glContext   = require('gl-context');
 var fit         = require('canvas-fit');
 
-var turntableCamera = require('turntable-camera');
 var Geom    = require('gl-geometry');
 var glClear   = require('gl-clear');
 var glShader = require('gl-shader');
@@ -54,7 +53,7 @@ gl.enable(gl.CULL_FACE);
 gl.enable(gl.DEPTH_TEST);
 
 var shader = glShader(gl,
-    "#define GLSLIFY 1\nprecision mediump float;\n\nattribute vec3 position;\nattribute vec3 normal;\n\nuniform mat4 normalMatrix;\nuniform mat4 proj;\nuniform mat4 view;\nuniform mat4 model;\n\nuniform vec3 color;\n\nvarying vec3 v_normal;\n\nvoid main() {\n  gl_Position = (\n    proj *\n    view *\n\tmodel *\n    vec4(position, 1.0)\n  );\n  v_normal = (normalMatrix * vec4(normal, 1.0)).xyz;\n}\n",
+    "#define GLSLIFY 1\nprecision mediump float;\r\n\r\nattribute vec3 position;\r\nattribute vec3 normal;\r\n\r\nuniform mat4 normalMatrix;\r\nuniform mat4 proj;\r\nuniform mat4 view;\r\nuniform mat4 model;\r\n\r\nuniform vec3 color;\r\n\r\nvarying vec3 v_normal;\r\n\r\nvoid main() {\r\n  gl_Position = (\r\n    proj *\r\n    view *\r\n\tmodel *\r\n    vec4(position, 1.0)\r\n  );\r\n  v_normal = (normalMatrix * vec4(normal, 1.0)).xyz;\r\n}\r\n",
 	"#define GLSLIFY 1\nprecision mediump float;\r\nuniform vec3 v_color;\r\nvarying vec3 v_normal;\r\n\r\nvoid main() {\r\n\r\n\tvec3 normal = normalize(v_normal);\r\n\tvec4 color = vec4(0., 0., 0., 0.);\r\n\tvec4 diffuse = vec4(0., 0., 0., 1.);\r\n\tdiffuse.rgb = v_color.rgb;\r\n\tdiffuse.xyz *= max(dot(normal,vec3(0.,0.,1.)), 0.);\r\n\tcolor.xyz += diffuse.xyz;\r\n\tcolor = vec4(color.rgb, 1.0);\r\n\tgl_FragColor = color;\r\n\r\n  //gl_FragColor = vec4(color, 1.0);\r\n}\r\n");
 
 var eye = [0, 0, -35];
@@ -428,7 +427,7 @@ function loadTree() {
 		pc2Loader.write(dataBuffer);
 	});
 }
-},{"./lib/model":2,"./lib/parse-pc2/index":3,"arraybuffer-to-buffer":68,"canvas-fit":76,"chai":77,"gl-clear":122,"gl-context":125,"gl-geometry":127,"gl-mat4":139,"gl-quat":174,"gl-shader":191,"gl-vec3":212,"gp-controls":252,"key-pressed":262,"normals":266,"obj-mtl-loader":267,"orbit-camera":270,"ray-triangle-intersection":275,"turntable-camera":294,"xhr-request":305}],2:[function(require,module,exports){
+},{"./lib/model":2,"./lib/parse-pc2/index":3,"arraybuffer-to-buffer":68,"canvas-fit":76,"chai":77,"gl-clear":122,"gl-context":125,"gl-geometry":127,"gl-mat4":139,"gl-quat":174,"gl-shader":191,"gl-vec3":213,"gp-controls":253,"key-pressed":263,"normals":266,"obj-mtl-loader":267,"orbit-camera":270,"ray-triangle-intersection":275,"xhr-request":305}],2:[function(require,module,exports){
 /* jshint node: true */
 /* jshint browser:true */
 "use strict";
@@ -538,8 +537,8 @@ Model.prototype.draw = function(shader) {
 
 		// That was bloody painful to deduce from my strange rendering bugs
 		// See http://stackoverflow.com/questions/10221647/how-do-i-use-webgl-drawelements-offset
-		var start = firstFace * 3 * 2; // "2" is sizeof(uint16)
-		var stop = nbFaces * 3 + start;
+		var start = firstFace * 3;
+		var stop = start + nbFaces * 3;
 
 		this.geom.draw(this.gl.TRIANGLES, start, stop);
 	}
@@ -649,7 +648,7 @@ function checkEqual(varName, expected) {
 
 // Usage: var parser = new require('parse-pc2')();
 module.exports = PC2Parser;
-},{"chai":6,"dissolve":40,"util":301}],4:[function(require,module,exports){
+},{"chai":6,"dissolve":40,"util":300}],4:[function(require,module,exports){
 /*!
  * assertion-error
  * Copyright(c) 2013 Jake Luer <jake@qualiancy.com>
@@ -974,7 +973,7 @@ BufferList.prototype.duplicate = function () {
 module.exports = BufferList
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":75,"readable-stream":50,"util":301}],6:[function(require,module,exports){
+},{"buffer":75,"readable-stream":50,"util":300}],6:[function(require,module,exports){
 module.exports = require('./lib/chai');
 
 },{"./lib/chai":7}],7:[function(require,module,exports){
@@ -6295,7 +6294,7 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../../../../node_modules/is-buffer/index.js")})
-},{"../../../../../node_modules/is-buffer/index.js":257}],36:[function(require,module,exports){
+},{"../../../../../node_modules/is-buffer/index.js":258}],36:[function(require,module,exports){
 module.exports = require('./lib/eql');
 
 },{"./lib/eql":37}],37:[function(require,module,exports){
@@ -9145,8 +9144,9 @@ var StringDecoder;
 
 util.inherits(Readable, Stream);
 
+var Duplex;
 function ReadableState(options, stream) {
-  var Duplex = require('./_stream_duplex');
+  Duplex = Duplex || require('./_stream_duplex');
 
   options = options || {};
 
@@ -9212,8 +9212,9 @@ function ReadableState(options, stream) {
   }
 }
 
+var Duplex;
 function Readable(options) {
-  var Duplex = require('./_stream_duplex');
+  Duplex = Duplex || require('./_stream_duplex');
 
   if (!(this instanceof Readable))
     return new Readable(options);
@@ -10314,8 +10315,9 @@ function WriteReq(chunk, encoding, cb) {
   this.next = null;
 }
 
+var Duplex;
 function WritableState(options, stream) {
-  var Duplex = require('./_stream_duplex');
+  Duplex = Duplex || require('./_stream_duplex');
 
   options = options || {};
 
@@ -10423,8 +10425,9 @@ Object.defineProperty(WritableState.prototype, 'buffer', {
 }catch(_){}}());
 
 
+var Duplex;
 function Writable(options) {
-  var Duplex = require('./_stream_duplex');
+  Duplex = Duplex || require('./_stream_duplex');
 
   // Writable ctor is applied to Duplexes, though they're not
   // instanceof Writable, they're instanceof Readable.
@@ -11033,7 +11036,7 @@ function base64DetectIncompleteChar(buffer) {
 
 },{"buffer":75}],62:[function(require,module,exports){
 arguments[4][38][0].apply(exports,arguments)
-},{"./lib/type":63,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\deep-eql\\node_modules\\type-detect\\index.js":38}],63:[function(require,module,exports){
+},{"./lib/type":63,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\deep-eql\\node_modules\\type-detect\\index.js":38}],63:[function(require,module,exports){
 /*!
  * type-detect
  * Copyright(c) 2013 jake luer <jake@alogicalparadox.com>
@@ -11352,7 +11355,7 @@ module.exports = function(dtype) {
 }).call(this,require("buffer").Buffer)
 },{"buffer":75}],69:[function(require,module,exports){
 module.exports=require(4)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\assertion-error\\index.js":4}],70:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\assertion-error\\index.js":4}],70:[function(require,module,exports){
 module.exports = function _atob(str) {
   return atob(str)
 }
@@ -12829,7 +12832,7 @@ function decodeUtf8Char (str) {
   }
 }
 
-},{"base64-js":71,"ieee754":253,"is-array":256}],76:[function(require,module,exports){
+},{"base64-js":71,"ieee754":254,"is-array":257}],76:[function(require,module,exports){
 var size = require('element-size')
 
 module.exports = fit
@@ -12865,63 +12868,63 @@ function fit(canvas, parent, scale) {
 
 },{"element-size":116}],77:[function(require,module,exports){
 module.exports=require(6)
-},{"./lib/chai":78,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\index.js":6}],78:[function(require,module,exports){
+},{"./lib/chai":78,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\index.js":6}],78:[function(require,module,exports){
 module.exports=require(7)
-},{"./chai/assertion":79,"./chai/config":80,"./chai/core/assertions":81,"./chai/interface/assert":82,"./chai/interface/expect":83,"./chai/interface/should":84,"./chai/utils":98,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai.js":7,"assertion-error":69}],79:[function(require,module,exports){
+},{"./chai/assertion":79,"./chai/config":80,"./chai/core/assertions":81,"./chai/interface/assert":82,"./chai/interface/expect":83,"./chai/interface/should":84,"./chai/utils":98,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai.js":7,"assertion-error":69}],79:[function(require,module,exports){
 module.exports=require(8)
-},{"./config":80,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\assertion.js":8}],80:[function(require,module,exports){
+},{"./config":80,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\assertion.js":8}],80:[function(require,module,exports){
 module.exports=require(9)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\config.js":9}],81:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\config.js":9}],81:[function(require,module,exports){
 module.exports=require(10)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\core\\assertions.js":10}],82:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\core\\assertions.js":10}],82:[function(require,module,exports){
 module.exports=require(11)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\interface\\assert.js":11}],83:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\interface\\assert.js":11}],83:[function(require,module,exports){
 module.exports=require(12)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\interface\\expect.js":12}],84:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\interface\\expect.js":12}],84:[function(require,module,exports){
 module.exports=require(13)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\interface\\should.js":13}],85:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\interface\\should.js":13}],85:[function(require,module,exports){
 module.exports=require(14)
-},{"../config":80,"./flag":89,"./transferFlags":105,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\addChainableMethod.js":14}],86:[function(require,module,exports){
+},{"../config":80,"./flag":89,"./transferFlags":105,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\addChainableMethod.js":14}],86:[function(require,module,exports){
 module.exports=require(15)
-},{"../config":80,"./flag":89,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\addMethod.js":15}],87:[function(require,module,exports){
+},{"../config":80,"./flag":89,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\addMethod.js":15}],87:[function(require,module,exports){
 module.exports=require(16)
-},{"../config":80,"./flag":89,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\addProperty.js":16}],88:[function(require,module,exports){
+},{"../config":80,"./flag":89,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\addProperty.js":16}],88:[function(require,module,exports){
 module.exports=require(17)
-},{"./flag":89,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\expectTypes.js":17,"assertion-error":69,"type-detect":295}],89:[function(require,module,exports){
+},{"./flag":89,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\expectTypes.js":17,"assertion-error":69,"type-detect":294}],89:[function(require,module,exports){
 module.exports=require(18)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\flag.js":18}],90:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\flag.js":18}],90:[function(require,module,exports){
 module.exports=require(19)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\getActual.js":19}],91:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\getActual.js":19}],91:[function(require,module,exports){
 module.exports=require(20)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\getEnumerableProperties.js":20}],92:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\getEnumerableProperties.js":20}],92:[function(require,module,exports){
 module.exports=require(21)
-},{"./flag":89,"./getActual":90,"./inspect":99,"./objDisplay":100,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\getMessage.js":21}],93:[function(require,module,exports){
+},{"./flag":89,"./getActual":90,"./inspect":99,"./objDisplay":100,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\getMessage.js":21}],93:[function(require,module,exports){
 module.exports=require(22)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\getName.js":22}],94:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\getName.js":22}],94:[function(require,module,exports){
 module.exports=require(23)
-},{"./hasProperty":97,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\getPathInfo.js":23}],95:[function(require,module,exports){
+},{"./hasProperty":97,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\getPathInfo.js":23}],95:[function(require,module,exports){
 module.exports=require(24)
-},{"./getPathInfo":94,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\getPathValue.js":24}],96:[function(require,module,exports){
+},{"./getPathInfo":94,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\getPathValue.js":24}],96:[function(require,module,exports){
 module.exports=require(25)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\getProperties.js":25}],97:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\getProperties.js":25}],97:[function(require,module,exports){
 module.exports=require(26)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\hasProperty.js":26,"type-detect":295}],98:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\hasProperty.js":26,"type-detect":294}],98:[function(require,module,exports){
 module.exports=require(27)
-},{"./addChainableMethod":85,"./addMethod":86,"./addProperty":87,"./expectTypes":88,"./flag":89,"./getActual":90,"./getMessage":92,"./getName":93,"./getPathInfo":94,"./getPathValue":95,"./hasProperty":97,"./inspect":99,"./objDisplay":100,"./overwriteChainableMethod":101,"./overwriteMethod":102,"./overwriteProperty":103,"./test":104,"./transferFlags":105,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\index.js":27,"deep-eql":110,"type-detect":295}],99:[function(require,module,exports){
+},{"./addChainableMethod":85,"./addMethod":86,"./addProperty":87,"./expectTypes":88,"./flag":89,"./getActual":90,"./getMessage":92,"./getName":93,"./getPathInfo":94,"./getPathValue":95,"./hasProperty":97,"./inspect":99,"./objDisplay":100,"./overwriteChainableMethod":101,"./overwriteMethod":102,"./overwriteProperty":103,"./test":104,"./transferFlags":105,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\index.js":27,"deep-eql":110,"type-detect":294}],99:[function(require,module,exports){
 module.exports=require(28)
-},{"./getEnumerableProperties":91,"./getName":93,"./getProperties":96,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\inspect.js":28}],100:[function(require,module,exports){
+},{"./getEnumerableProperties":91,"./getName":93,"./getProperties":96,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\inspect.js":28}],100:[function(require,module,exports){
 module.exports=require(29)
-},{"../config":80,"./inspect":99,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\objDisplay.js":29}],101:[function(require,module,exports){
+},{"../config":80,"./inspect":99,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\objDisplay.js":29}],101:[function(require,module,exports){
 module.exports=require(30)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\overwriteChainableMethod.js":30}],102:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\overwriteChainableMethod.js":30}],102:[function(require,module,exports){
 module.exports=require(31)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\overwriteMethod.js":31}],103:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\overwriteMethod.js":31}],103:[function(require,module,exports){
 module.exports=require(32)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\overwriteProperty.js":32}],104:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\overwriteProperty.js":32}],104:[function(require,module,exports){
 module.exports=require(33)
-},{"./flag":89,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\test.js":33}],105:[function(require,module,exports){
+},{"./flag":89,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\test.js":33}],105:[function(require,module,exports){
 module.exports=require(34)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\transferFlags.js":34}],106:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\chai\\lib\\chai\\utils\\transferFlags.js":34}],106:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -13032,7 +13035,7 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":257}],107:[function(require,module,exports){
+},{"../../is-buffer/index.js":258}],107:[function(require,module,exports){
 "use strict"
 
 var createThunk = require("./lib/thunk.js")
@@ -13499,7 +13502,7 @@ function generateCWiseOp(proc, typesig) {
 }
 module.exports = generateCWiseOp
 
-},{"uniq":298}],109:[function(require,module,exports){
+},{"uniq":297}],109:[function(require,module,exports){
 "use strict"
 
 // The function below is called when constructing a cwise function object, and does the following:
@@ -13589,13 +13592,13 @@ module.exports = createThunk
 
 },{"./compile.js":108}],110:[function(require,module,exports){
 module.exports=require(36)
-},{"./lib/eql":111,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\deep-eql\\index.js":36}],111:[function(require,module,exports){
+},{"./lib/eql":111,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\deep-eql\\index.js":36}],111:[function(require,module,exports){
 module.exports=require(37)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\deep-eql\\lib\\eql.js":37,"buffer":75,"type-detect":112}],112:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\deep-eql\\lib\\eql.js":37,"buffer":75,"type-detect":112}],112:[function(require,module,exports){
 module.exports=require(38)
-},{"./lib/type":113,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\deep-eql\\node_modules\\type-detect\\index.js":38}],113:[function(require,module,exports){
+},{"./lib/type":113,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\deep-eql\\node_modules\\type-detect\\index.js":38}],113:[function(require,module,exports){
 module.exports=require(39)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\deep-eql\\node_modules\\type-detect\\lib\\type.js":39}],114:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\deep-eql\\node_modules\\type-detect\\lib\\type.js":39}],114:[function(require,module,exports){
 module.exports = function(dtype) {
   switch (dtype) {
     case 'int8':
@@ -14055,7 +14058,7 @@ function forEachObject(object, iterator, context) {
     }
 }
 
-},{"is-function":258}],119:[function(require,module,exports){
+},{"is-function":259}],119:[function(require,module,exports){
 module.exports = {
   axes: [
       '<axis-left-x>'
@@ -14237,7 +14240,7 @@ function createBuffer(gl, data, type, usage) {
 
 module.exports = createBuffer
 
-},{"ndarray":265,"ndarray-ops":264,"typedarray-pool":297}],121:[function(require,module,exports){
+},{"ndarray":265,"ndarray-ops":264,"typedarray-pool":296}],121:[function(require,module,exports){
 exports.color = function(color) {
   return array(color, [0, 0, 0, 1])
 }
@@ -14713,9 +14716,11 @@ function formatCompilerError(errLog, src, type) {
 }
 
 
-},{"add-line-numbers":65,"gl-constants/lookup":124,"glsl-shader-name":246,"sprintf-js":288}],127:[function(require,module,exports){
+},{"add-line-numbers":65,"gl-constants/lookup":124,"glsl-shader-name":247,"sprintf-js":288}],127:[function(require,module,exports){
 var normalize = require('./normalize')
+var glType = require('gl-to-dtype')
 var createVAO = require('gl-vao')
+var dtype = require('dtype')
 
 module.exports = GLGeometry
 
@@ -14723,6 +14728,8 @@ function GLGeometry(gl) {
   if (!(this instanceof GLGeometry))
     return new GLGeometry(gl)
 
+  this._elementsType = 5123
+  this._elementsBytes = 2
   this._attributes = []
   this._dirty = true
   this._length = 0
@@ -14738,6 +14745,9 @@ GLGeometry.prototype.dispose = function() {
   }
 
   this._attributes = []
+  this._keys = []
+  this._length = 0
+  this._dirty = true
 
   if (this._index) {
     this._index.dispose()
@@ -14832,7 +14842,7 @@ GLGeometry.prototype.draw = function draw(mode, start, stop) {
   this.update()
 
   if (this._vao._useElements) {
-    this.gl.drawElements(mode, stop - start, this._vao._elementsType, start)
+    this.gl.drawElements(mode, stop - start, this._elementsType, start * this._elementsBytes) // "2" is sizeof(uint16)
   } else {
     this.gl.drawArrays(mode, start, stop - start)
   }
@@ -14853,9 +14863,14 @@ GLGeometry.prototype.update = function update() {
     , this._attributes
     , this._index
   )
+
+  this._elementsType = this._vao._elementsType
+  this._elementsBytes = dtype(
+    glType(this._elementsType) || 'array'
+  ).BYTES_PER_ELEMENT || 2
 }
 
-},{"./normalize":128,"gl-vao":200}],128:[function(require,module,exports){
+},{"./normalize":128,"dtype":114,"gl-to-dtype":197,"gl-vao":201}],128:[function(require,module,exports){
 var pack         = require('array-pack-2d')
 var ista         = require('is-typedarray')
 var createBuffer = require('gl-buffer')
@@ -14870,6 +14885,14 @@ function normalize(gl, attr, size, mode, type) {
     return {
         buffer: createBuffer(gl, pack(attr, type), mode)
       , length: attr.length
+    }
+  }
+
+  // if we get a nested 2D array (with the second array being typed)
+  if (Array.isArray(attr) && ista(attr[0])) {
+    return {
+        buffer: createBuffer(gl, pack(attr, type), mode)
+      , length: ( attr.length * attr[0].length ) / size
     }
   }
 
@@ -14936,7 +14959,7 @@ function convert(a, b) {
   return b
 }
 
-},{"array-pack-2d":66,"dtype":114,"gl-buffer":120,"is-typedarray":259,"isndarray":261}],129:[function(require,module,exports){
+},{"array-pack-2d":66,"dtype":114,"gl-buffer":120,"is-typedarray":260,"isndarray":262}],129:[function(require,module,exports){
 module.exports = create
 
 /**
@@ -20851,7 +20874,7 @@ module.exports = vec4;
  */
 module.exports = require('gl-vec4/add')
 
-},{"gl-vec4/add":234}],165:[function(require,module,exports){
+},{"gl-vec4/add":235}],165:[function(require,module,exports){
 module.exports = calculateW
 
 /**
@@ -20883,7 +20906,7 @@ function calculateW (out, a) {
  */
 module.exports = require('gl-vec4/clone')
 
-},{"gl-vec4/clone":235}],167:[function(require,module,exports){
+},{"gl-vec4/clone":236}],167:[function(require,module,exports){
 module.exports = conjugate
 
 /**
@@ -20913,7 +20936,7 @@ function conjugate (out, a) {
  */
 module.exports = require('gl-vec4/copy')
 
-},{"gl-vec4/copy":236}],169:[function(require,module,exports){
+},{"gl-vec4/copy":237}],169:[function(require,module,exports){
 module.exports = create
 
 /**
@@ -20941,7 +20964,7 @@ function create () {
  */
 module.exports = require('gl-vec4/dot')
 
-},{"gl-vec4/dot":237}],171:[function(require,module,exports){
+},{"gl-vec4/dot":238}],171:[function(require,module,exports){
 module.exports = fromMat3
 
 /**
@@ -21005,7 +21028,7 @@ function fromMat3 (out, m) {
  */
 module.exports = require('gl-vec4/fromValues')
 
-},{"gl-vec4/fromValues":238}],173:[function(require,module,exports){
+},{"gl-vec4/fromValues":239}],173:[function(require,module,exports){
 module.exports = identity
 
 /**
@@ -21086,7 +21109,7 @@ function invert (out, a) {
  */
 module.exports = require('gl-vec4/length')
 
-},{"gl-vec4/length":239}],177:[function(require,module,exports){
+},{"gl-vec4/length":240}],177:[function(require,module,exports){
 /**
  * Performs a linear interpolation between two quat's
  *
@@ -21099,7 +21122,7 @@ module.exports = require('gl-vec4/length')
  */
 module.exports = require('gl-vec4/lerp')
 
-},{"gl-vec4/lerp":240}],178:[function(require,module,exports){
+},{"gl-vec4/lerp":241}],178:[function(require,module,exports){
 module.exports = multiply
 
 /**
@@ -21132,7 +21155,7 @@ function multiply (out, a, b) {
  */
 module.exports = require('gl-vec4/normalize')
 
-},{"gl-vec4/normalize":241}],180:[function(require,module,exports){
+},{"gl-vec4/normalize":242}],180:[function(require,module,exports){
 module.exports = rotateX
 
 /**
@@ -21256,7 +21279,7 @@ function rotationTo (out, a, b) {
   }
 }
 
-},{"./normalize":179,"./setAxisAngle":187,"gl-vec3/cross":206,"gl-vec3/dot":209,"gl-vec3/length":214,"gl-vec3/normalize":220}],184:[function(require,module,exports){
+},{"./normalize":179,"./setAxisAngle":187,"gl-vec3/cross":207,"gl-vec3/dot":210,"gl-vec3/length":215,"gl-vec3/normalize":221}],184:[function(require,module,exports){
 /**
  * Scales a quat by a scalar number
  *
@@ -21268,7 +21291,7 @@ function rotationTo (out, a, b) {
  */
 module.exports = require('gl-vec4/scale')
 
-},{"gl-vec4/scale":242}],185:[function(require,module,exports){
+},{"gl-vec4/scale":243}],185:[function(require,module,exports){
 /**
  * Set the components of a quat to the given values
  *
@@ -21282,7 +21305,7 @@ module.exports = require('gl-vec4/scale')
  */
 module.exports = require('gl-vec4/set')
 
-},{"gl-vec4/set":243}],186:[function(require,module,exports){
+},{"gl-vec4/set":244}],186:[function(require,module,exports){
 var mat3create = require('gl-mat3/create')
 var fromMat3 = require('./fromMat3')
 var normalize = require('./normalize')
@@ -21429,7 +21452,7 @@ function sqlerp (out, a, b, c, d, t) {
  */
 module.exports = require('gl-vec4/squaredLength')
 
-},{"gl-vec4/squaredLength":244}],191:[function(require,module,exports){
+},{"gl-vec4/squaredLength":245}],191:[function(require,module,exports){
 'use strict'
 
 var createUniformWrapper   = require('./lib/create-uniforms')
@@ -22397,6 +22420,24 @@ function createProgram(gl, vref, fref, attribs, locations) {
 }
 
 },{"gl-format-compiler-error":126,"weakmap-shim":304}],197:[function(require,module,exports){
+module.exports = glToType
+function glToType (flag) {
+  switch (flag) {
+    case 5126: return 'float32'   // gl.FLOAT
+    case 5125: return 'uint32'    // gl.UNSIGNED_INT
+    case 5124: return 'int32'     // gl.INT
+    case 5123: return 'uint16'    // gl.UNSIGNED_SHORT
+    case 32819: return 'uint16'   // gl.UNSIGNED_SHORT_4_4_4_4
+    case 32820: return 'uint16'   // gl.UNSIGNED_SHORT_5_5_5_1
+    case 33635: return 'uint16'   // gl.UNSIGNED_SHORT_5_6_5
+    case 5122: return 'int16'     // gl.SHORT
+    case 5121: return 'uint8'     // gl.UNSIGNED_BYTE
+    case 5120: return 'int8'      // gl.BYTE
+    default: return null
+  }
+}
+
+},{}],198:[function(require,module,exports){
 "use strict"
 
 function doBind(gl, elements, attributes) {
@@ -22451,7 +22492,7 @@ function doBind(gl, elements, attributes) {
 }
 
 module.exports = doBind
-},{}],198:[function(require,module,exports){
+},{}],199:[function(require,module,exports){
 "use strict"
 
 var bindAttribs = require("./do-bind.js")
@@ -22491,7 +22532,7 @@ function createVAOEmulated(gl) {
 }
 
 module.exports = createVAOEmulated
-},{"./do-bind.js":197}],199:[function(require,module,exports){
+},{"./do-bind.js":198}],200:[function(require,module,exports){
 "use strict"
 
 var bindAttribs = require("./do-bind.js")
@@ -22579,7 +22620,7 @@ function createVAONative(gl, ext) {
 }
 
 module.exports = createVAONative
-},{"./do-bind.js":197}],200:[function(require,module,exports){
+},{"./do-bind.js":198}],201:[function(require,module,exports){
 "use strict"
 
 var createVAONative = require("./lib/vao-native.js")
@@ -22599,7 +22640,7 @@ function createVAO(gl, attributes, elements, elementsType) {
 
 module.exports = createVAO
 
-},{"./lib/vao-emulated.js":198,"./lib/vao-native.js":199}],201:[function(require,module,exports){
+},{"./lib/vao-emulated.js":199,"./lib/vao-native.js":200}],202:[function(require,module,exports){
 module.exports = add;
 
 /**
@@ -22616,7 +22657,7 @@ function add(out, a, b) {
     out[2] = a[2] + b[2]
     return out
 }
-},{}],202:[function(require,module,exports){
+},{}],203:[function(require,module,exports){
 module.exports = angle
 
 var fromValues = require('./fromValues')
@@ -22645,7 +22686,7 @@ function angle(a, b) {
     }     
 }
 
-},{"./dot":209,"./fromValues":211,"./normalize":220}],203:[function(require,module,exports){
+},{"./dot":210,"./fromValues":212,"./normalize":221}],204:[function(require,module,exports){
 module.exports = clone;
 
 /**
@@ -22661,7 +22702,7 @@ function clone(a) {
     out[2] = a[2]
     return out
 }
-},{}],204:[function(require,module,exports){
+},{}],205:[function(require,module,exports){
 module.exports = copy;
 
 /**
@@ -22677,7 +22718,7 @@ function copy(out, a) {
     out[2] = a[2]
     return out
 }
-},{}],205:[function(require,module,exports){
+},{}],206:[function(require,module,exports){
 module.exports = create;
 
 /**
@@ -22692,7 +22733,7 @@ function create() {
     out[2] = 0
     return out
 }
-},{}],206:[function(require,module,exports){
+},{}],207:[function(require,module,exports){
 module.exports = cross;
 
 /**
@@ -22712,7 +22753,7 @@ function cross(out, a, b) {
     out[2] = ax * by - ay * bx
     return out
 }
-},{}],207:[function(require,module,exports){
+},{}],208:[function(require,module,exports){
 module.exports = distance;
 
 /**
@@ -22728,7 +22769,7 @@ function distance(a, b) {
         z = b[2] - a[2]
     return Math.sqrt(x*x + y*y + z*z)
 }
-},{}],208:[function(require,module,exports){
+},{}],209:[function(require,module,exports){
 module.exports = divide;
 
 /**
@@ -22745,7 +22786,7 @@ function divide(out, a, b) {
     out[2] = a[2] / b[2]
     return out
 }
-},{}],209:[function(require,module,exports){
+},{}],210:[function(require,module,exports){
 module.exports = dot;
 
 /**
@@ -22758,7 +22799,7 @@ module.exports = dot;
 function dot(a, b) {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 }
-},{}],210:[function(require,module,exports){
+},{}],211:[function(require,module,exports){
 module.exports = forEach;
 
 var vec = require('./create')()
@@ -22803,7 +22844,7 @@ function forEach(a, stride, offset, count, fn, arg) {
         
         return a
 }
-},{"./create":205}],211:[function(require,module,exports){
+},{"./create":206}],212:[function(require,module,exports){
 module.exports = fromValues;
 
 /**
@@ -22821,7 +22862,7 @@ function fromValues(x, y, z) {
     out[2] = z
     return out
 }
-},{}],212:[function(require,module,exports){
+},{}],213:[function(require,module,exports){
 module.exports = {
   create: require('./create')
   , clone: require('./clone')
@@ -22856,7 +22897,7 @@ module.exports = {
   , rotateZ: require('./rotateZ')
   , forEach: require('./forEach')
 }
-},{"./add":201,"./angle":202,"./clone":203,"./copy":204,"./create":205,"./cross":206,"./distance":207,"./divide":208,"./dot":209,"./forEach":210,"./fromValues":211,"./inverse":213,"./length":214,"./lerp":215,"./max":216,"./min":217,"./multiply":218,"./negate":219,"./normalize":220,"./random":221,"./rotateX":222,"./rotateY":223,"./rotateZ":224,"./scale":225,"./scaleAndAdd":226,"./set":227,"./squaredDistance":228,"./squaredLength":229,"./subtract":230,"./transformMat3":231,"./transformMat4":232,"./transformQuat":233}],213:[function(require,module,exports){
+},{"./add":202,"./angle":203,"./clone":204,"./copy":205,"./create":206,"./cross":207,"./distance":208,"./divide":209,"./dot":210,"./forEach":211,"./fromValues":212,"./inverse":214,"./length":215,"./lerp":216,"./max":217,"./min":218,"./multiply":219,"./negate":220,"./normalize":221,"./random":222,"./rotateX":223,"./rotateY":224,"./rotateZ":225,"./scale":226,"./scaleAndAdd":227,"./set":228,"./squaredDistance":229,"./squaredLength":230,"./subtract":231,"./transformMat3":232,"./transformMat4":233,"./transformQuat":234}],214:[function(require,module,exports){
 module.exports = inverse;
 
 /**
@@ -22872,7 +22913,7 @@ function inverse(out, a) {
   out[2] = 1.0 / a[2]
   return out
 }
-},{}],214:[function(require,module,exports){
+},{}],215:[function(require,module,exports){
 module.exports = length;
 
 /**
@@ -22887,7 +22928,7 @@ function length(a) {
         z = a[2]
     return Math.sqrt(x*x + y*y + z*z)
 }
-},{}],215:[function(require,module,exports){
+},{}],216:[function(require,module,exports){
 module.exports = lerp;
 
 /**
@@ -22908,7 +22949,7 @@ function lerp(out, a, b, t) {
     out[2] = az + t * (b[2] - az)
     return out
 }
-},{}],216:[function(require,module,exports){
+},{}],217:[function(require,module,exports){
 module.exports = max;
 
 /**
@@ -22925,7 +22966,7 @@ function max(out, a, b) {
     out[2] = Math.max(a[2], b[2])
     return out
 }
-},{}],217:[function(require,module,exports){
+},{}],218:[function(require,module,exports){
 module.exports = min;
 
 /**
@@ -22942,7 +22983,7 @@ function min(out, a, b) {
     out[2] = Math.min(a[2], b[2])
     return out
 }
-},{}],218:[function(require,module,exports){
+},{}],219:[function(require,module,exports){
 module.exports = multiply;
 
 /**
@@ -22959,7 +23000,7 @@ function multiply(out, a, b) {
     out[2] = a[2] * b[2]
     return out
 }
-},{}],219:[function(require,module,exports){
+},{}],220:[function(require,module,exports){
 module.exports = negate;
 
 /**
@@ -22975,7 +23016,7 @@ function negate(out, a) {
     out[2] = -a[2]
     return out
 }
-},{}],220:[function(require,module,exports){
+},{}],221:[function(require,module,exports){
 module.exports = normalize;
 
 /**
@@ -22999,7 +23040,7 @@ function normalize(out, a) {
     }
     return out
 }
-},{}],221:[function(require,module,exports){
+},{}],222:[function(require,module,exports){
 module.exports = random;
 
 /**
@@ -23021,7 +23062,7 @@ function random(out, scale) {
     out[2] = z * scale
     return out
 }
-},{}],222:[function(require,module,exports){
+},{}],223:[function(require,module,exports){
 module.exports = rotateX;
 
 /**
@@ -23051,7 +23092,7 @@ function rotateX(out, a, b, c){
 
     return out
 }
-},{}],223:[function(require,module,exports){
+},{}],224:[function(require,module,exports){
 module.exports = rotateY;
 
 /**
@@ -23081,7 +23122,7 @@ function rotateY(out, a, b, c){
   
     return out
 }
-},{}],224:[function(require,module,exports){
+},{}],225:[function(require,module,exports){
 module.exports = rotateZ;
 
 /**
@@ -23111,7 +23152,7 @@ function rotateZ(out, a, b, c){
   
     return out
 }
-},{}],225:[function(require,module,exports){
+},{}],226:[function(require,module,exports){
 module.exports = scale;
 
 /**
@@ -23128,7 +23169,7 @@ function scale(out, a, b) {
     out[2] = a[2] * b
     return out
 }
-},{}],226:[function(require,module,exports){
+},{}],227:[function(require,module,exports){
 module.exports = scaleAndAdd;
 
 /**
@@ -23146,7 +23187,7 @@ function scaleAndAdd(out, a, b, scale) {
     out[2] = a[2] + (b[2] * scale)
     return out
 }
-},{}],227:[function(require,module,exports){
+},{}],228:[function(require,module,exports){
 module.exports = set;
 
 /**
@@ -23164,7 +23205,7 @@ function set(out, x, y, z) {
     out[2] = z
     return out
 }
-},{}],228:[function(require,module,exports){
+},{}],229:[function(require,module,exports){
 module.exports = squaredDistance;
 
 /**
@@ -23180,7 +23221,7 @@ function squaredDistance(a, b) {
         z = b[2] - a[2]
     return x*x + y*y + z*z
 }
-},{}],229:[function(require,module,exports){
+},{}],230:[function(require,module,exports){
 module.exports = squaredLength;
 
 /**
@@ -23195,7 +23236,7 @@ function squaredLength(a) {
         z = a[2]
     return x*x + y*y + z*z
 }
-},{}],230:[function(require,module,exports){
+},{}],231:[function(require,module,exports){
 module.exports = subtract;
 
 /**
@@ -23212,7 +23253,7 @@ function subtract(out, a, b) {
     out[2] = a[2] - b[2]
     return out
 }
-},{}],231:[function(require,module,exports){
+},{}],232:[function(require,module,exports){
 module.exports = transformMat3;
 
 /**
@@ -23230,7 +23271,7 @@ function transformMat3(out, a, m) {
     out[2] = x * m[2] + y * m[5] + z * m[8]
     return out
 }
-},{}],232:[function(require,module,exports){
+},{}],233:[function(require,module,exports){
 module.exports = transformMat4;
 
 /**
@@ -23251,7 +23292,7 @@ function transformMat4(out, a, m) {
     out[2] = (m[2] * x + m[6] * y + m[10] * z + m[14]) / w
     return out
 }
-},{}],233:[function(require,module,exports){
+},{}],234:[function(require,module,exports){
 module.exports = transformQuat;
 
 /**
@@ -23280,7 +23321,7 @@ function transformQuat(out, a, q) {
     out[2] = iz * qw + iw * -qz + ix * -qy - iy * -qx
     return out
 }
-},{}],234:[function(require,module,exports){
+},{}],235:[function(require,module,exports){
 module.exports = add
 
 /**
@@ -23299,7 +23340,7 @@ function add (out, a, b) {
   return out
 }
 
-},{}],235:[function(require,module,exports){
+},{}],236:[function(require,module,exports){
 module.exports = clone
 
 /**
@@ -23317,7 +23358,7 @@ function clone (a) {
   return out
 }
 
-},{}],236:[function(require,module,exports){
+},{}],237:[function(require,module,exports){
 module.exports = copy
 
 /**
@@ -23335,7 +23376,7 @@ function copy (out, a) {
   return out
 }
 
-},{}],237:[function(require,module,exports){
+},{}],238:[function(require,module,exports){
 module.exports = dot
 
 /**
@@ -23349,7 +23390,7 @@ function dot (a, b) {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]
 }
 
-},{}],238:[function(require,module,exports){
+},{}],239:[function(require,module,exports){
 module.exports = fromValues
 
 /**
@@ -23370,7 +23411,7 @@ function fromValues (x, y, z, w) {
   return out
 }
 
-},{}],239:[function(require,module,exports){
+},{}],240:[function(require,module,exports){
 module.exports = length
 
 /**
@@ -23387,7 +23428,7 @@ function length (a) {
   return Math.sqrt(x * x + y * y + z * z + w * w)
 }
 
-},{}],240:[function(require,module,exports){
+},{}],241:[function(require,module,exports){
 module.exports = lerp
 
 /**
@@ -23411,7 +23452,7 @@ function lerp (out, a, b, t) {
   return out
 }
 
-},{}],241:[function(require,module,exports){
+},{}],242:[function(require,module,exports){
 module.exports = normalize
 
 /**
@@ -23437,7 +23478,7 @@ function normalize (out, a) {
   return out
 }
 
-},{}],242:[function(require,module,exports){
+},{}],243:[function(require,module,exports){
 module.exports = scale
 
 /**
@@ -23456,7 +23497,7 @@ function scale (out, a, b) {
   return out
 }
 
-},{}],243:[function(require,module,exports){
+},{}],244:[function(require,module,exports){
 module.exports = set
 
 /**
@@ -23477,7 +23518,7 @@ function set (out, x, y, z, w) {
   return out
 }
 
-},{}],244:[function(require,module,exports){
+},{}],245:[function(require,module,exports){
 module.exports = squaredLength
 
 /**
@@ -23494,7 +23535,7 @@ function squaredLength (a) {
   return x * x + y * y + z * z + w * w
 }
 
-},{}],245:[function(require,module,exports){
+},{}],246:[function(require,module,exports){
 (function (global){
 if (typeof window !== "undefined") {
     module.exports = window;
@@ -23507,7 +23548,7 @@ if (typeof window !== "undefined") {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],246:[function(require,module,exports){
+},{}],247:[function(require,module,exports){
 var tokenize = require('glsl-tokenizer')
 var atob     = require('atob-lite')
 
@@ -23532,7 +23573,7 @@ function getName(src) {
   }
 }
 
-},{"atob-lite":70,"glsl-tokenizer":251}],247:[function(require,module,exports){
+},{"atob-lite":70,"glsl-tokenizer":252}],248:[function(require,module,exports){
 module.exports = tokenize
 
 var literals = require('./lib/literals')
@@ -23879,7 +23920,7 @@ function tokenize() {
   }
 }
 
-},{"./lib/builtins":248,"./lib/literals":249,"./lib/operators":250}],248:[function(require,module,exports){
+},{"./lib/builtins":249,"./lib/literals":250,"./lib/operators":251}],249:[function(require,module,exports){
 module.exports = [
     'gl_Position'
   , 'gl_PointSize'
@@ -24027,7 +24068,7 @@ module.exports = [
   , 'dFdy'
 ]
 
-},{}],249:[function(require,module,exports){
+},{}],250:[function(require,module,exports){
 module.exports = [
   // current
     'precision'
@@ -24122,7 +24163,7 @@ module.exports = [
   , 'using'
 ]
 
-},{}],250:[function(require,module,exports){
+},{}],251:[function(require,module,exports){
 module.exports = [
     '<<='
   , '>>='
@@ -24171,7 +24212,7 @@ module.exports = [
   , '}'
 ]
 
-},{}],251:[function(require,module,exports){
+},{}],252:[function(require,module,exports){
 var tokenize = require('./index')
 
 module.exports = tokenizeString
@@ -24186,7 +24227,7 @@ function tokenizeString(str) {
   return tokens
 }
 
-},{"./index":247}],252:[function(require,module,exports){
+},{"./index":248}],253:[function(require,module,exports){
 var gkey = require('gkey/generic')
 
 function noop(){}
@@ -24258,7 +24299,7 @@ function controller(index, controls) {
   return self
 }
 
-},{"gkey/generic":119}],253:[function(require,module,exports){
+},{"gkey/generic":119}],254:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -24344,9 +24385,9 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],254:[function(require,module,exports){
+},{}],255:[function(require,module,exports){
 module.exports=require(41)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\inherits\\inherits_browser.js":41}],255:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\inherits\\inherits_browser.js":41}],256:[function(require,module,exports){
 "use strict"
 
 function iota(n) {
@@ -24358,7 +24399,7 @@ function iota(n) {
 }
 
 module.exports = iota
-},{}],256:[function(require,module,exports){
+},{}],257:[function(require,module,exports){
 
 /**
  * isArray
@@ -24393,7 +24434,7 @@ module.exports = isArray || function (val) {
   return !! val && '[object Array]' == str.call(val);
 };
 
-},{}],257:[function(require,module,exports){
+},{}],258:[function(require,module,exports){
 /**
  * Determine if an object is Buffer
  *
@@ -24412,7 +24453,7 @@ module.exports = function (obj) {
     ))
 }
 
-},{}],258:[function(require,module,exports){
+},{}],259:[function(require,module,exports){
 module.exports = isFunction
 
 var toString = Object.prototype.toString
@@ -24429,7 +24470,7 @@ function isFunction (fn) {
       fn === window.prompt))
 };
 
-},{}],259:[function(require,module,exports){
+},{}],260:[function(require,module,exports){
 module.exports      = isTypedArray
 isTypedArray.strict = isStrictTypedArray
 isTypedArray.loose  = isLooseTypedArray
@@ -24470,9 +24511,9 @@ function isLooseTypedArray(arr) {
   return names[toString.call(arr)]
 }
 
-},{}],260:[function(require,module,exports){
+},{}],261:[function(require,module,exports){
 module.exports=require(42)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\isarray\\index.js":42}],261:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\isarray\\index.js":42}],262:[function(require,module,exports){
 module.exports = function(arr) {
   if (!arr) return false
   if (!arr.dtype) return false
@@ -24480,7 +24521,7 @@ module.exports = function(arr) {
   return re.test(String(arr.constructor))
 }
 
-},{}],262:[function(require,module,exports){
+},{}],263:[function(require,module,exports){
 (function (process){
 var keys = require('vkey')
 var list = Object.keys(keys)
@@ -24517,145 +24558,7 @@ function keydown(e) {
 }
 
 }).call(this,require('_process'))
-},{"_process":74,"vkey":263}],263:[function(require,module,exports){
-var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
-  , isOSX = /OS X/.test(ua)
-  , isOpera = /Opera/.test(ua)
-  , maybeFirefox = !/like Gecko/.test(ua) && !isOpera
-
-var i, output = module.exports = {
-  0:  isOSX ? '<menu>' : '<UNK>'
-, 1:  '<mouse 1>'
-, 2:  '<mouse 2>'
-, 3:  '<break>'
-, 4:  '<mouse 3>'
-, 5:  '<mouse 4>'
-, 6:  '<mouse 5>'
-, 8:  '<backspace>'
-, 9:  '<tab>'
-, 12: '<clear>'
-, 13: '<enter>'
-, 16: '<shift>'
-, 17: '<control>'
-, 18: '<alt>'
-, 19: '<pause>'
-, 20: '<caps-lock>'
-, 21: '<ime-hangul>'
-, 23: '<ime-junja>'
-, 24: '<ime-final>'
-, 25: '<ime-kanji>'
-, 27: '<escape>'
-, 28: '<ime-convert>'
-, 29: '<ime-nonconvert>'
-, 30: '<ime-accept>'
-, 31: '<ime-mode-change>'
-, 27: '<escape>'
-, 32: '<space>'
-, 33: '<page-up>'
-, 34: '<page-down>'
-, 35: '<end>'
-, 36: '<home>'
-, 37: '<left>'
-, 38: '<up>'
-, 39: '<right>'
-, 40: '<down>'
-, 41: '<select>'
-, 42: '<print>'
-, 43: '<execute>'
-, 44: '<snapshot>'
-, 45: '<insert>'
-, 46: '<delete>'
-, 47: '<help>'
-, 91: '<meta>'  // meta-left -- no one handles left and right properly, so we coerce into one.
-, 92: '<meta>'  // meta-right
-, 93: isOSX ? '<meta>' : '<menu>'      // chrome,opera,safari all report this for meta-right (osx mbp).
-, 95: '<sleep>'
-, 106: '<num-*>'
-, 107: '<num-+>'
-, 108: '<num-enter>'
-, 109: '<num-->'
-, 110: '<num-.>'
-, 111: '<num-/>'
-, 144: '<num-lock>'
-, 145: '<scroll-lock>'
-, 160: '<shift-left>'
-, 161: '<shift-right>'
-, 162: '<control-left>'
-, 163: '<control-right>'
-, 164: '<alt-left>'
-, 165: '<alt-right>'
-, 166: '<browser-back>'
-, 167: '<browser-forward>'
-, 168: '<browser-refresh>'
-, 169: '<browser-stop>'
-, 170: '<browser-search>'
-, 171: '<browser-favorites>'
-, 172: '<browser-home>'
-
-  // ff/osx reports '<volume-mute>' for '-'
-, 173: isOSX && maybeFirefox ? '-' : '<volume-mute>'
-, 174: '<volume-down>'
-, 175: '<volume-up>'
-, 176: '<next-track>'
-, 177: '<prev-track>'
-, 178: '<stop>'
-, 179: '<play-pause>'
-, 180: '<launch-mail>'
-, 181: '<launch-media-select>'
-, 182: '<launch-app 1>'
-, 183: '<launch-app 2>'
-, 186: ';'
-, 187: '='
-, 188: ','
-, 189: '-'
-, 190: '.'
-, 191: '/'
-, 192: '`'
-, 219: '['
-, 220: '\\'
-, 221: ']'
-, 222: "'"
-, 223: '<meta>'
-, 224: '<meta>'       // firefox reports meta here.
-, 226: '<alt-gr>'
-, 229: '<ime-process>'
-, 231: isOpera ? '`' : '<unicode>'
-, 246: '<attention>'
-, 247: '<crsel>'
-, 248: '<exsel>'
-, 249: '<erase-eof>'
-, 250: '<play>'
-, 251: '<zoom>'
-, 252: '<no-name>'
-, 253: '<pa-1>'
-, 254: '<clear>'
-}
-
-for(i = 58; i < 65; ++i) {
-  output[i] = String.fromCharCode(i)
-}
-
-// 0-9
-for(i = 48; i < 58; ++i) {
-  output[i] = (i - 48)+''
-}
-
-// A-Z
-for(i = 65; i < 91; ++i) {
-  output[i] = String.fromCharCode(i)
-}
-
-// num0-9
-for(i = 96; i < 106; ++i) {
-  output[i] = '<num-'+(i - 96)+'>'
-}
-
-// F1-F24
-for(i = 112; i < 136; ++i) {
-  output[i] = 'F'+(i-111)
-}
-
-},{}],264:[function(require,module,exports){
+},{"_process":74,"vkey":301}],264:[function(require,module,exports){
 "use strict"
 
 var compile = require("cwise-compiler")
@@ -25463,7 +25366,7 @@ function wrappedNDArrayCtor(data, shape, stride, offset) {
 
 module.exports = wrappedNDArrayCtor
 
-},{"iota-array":255,"is-buffer":257}],266:[function(require,module,exports){
+},{"iota-array":256,"is-buffer":258}],266:[function(require,module,exports){
 var EPSILON = 1e-6;
 
 //Estimate the vertex normals of a mesh
@@ -26176,13 +26079,13 @@ function intersectTriangle (out, pt, dir, tri) {
     return out;
 }
 
-},{"gl-vec3/cross":206,"gl-vec3/dot":209,"gl-vec3/subtract":230}],276:[function(require,module,exports){
+},{"gl-vec3/cross":207,"gl-vec3/dot":210,"gl-vec3/subtract":231}],276:[function(require,module,exports){
 arguments[4][51][0].apply(exports,arguments)
-},{"./lib/_stream_duplex.js":277,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\node_modules\\readable-stream\\duplex.js":51}],277:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":277,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\node_modules\\readable-stream\\duplex.js":51}],277:[function(require,module,exports){
 arguments[4][44][0].apply(exports,arguments)
-},{"./_stream_readable":279,"./_stream_writable":281,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\readable-stream\\lib\\_stream_duplex.js":44,"_process":74,"core-util-is":106,"inherits":254}],278:[function(require,module,exports){
+},{"./_stream_readable":279,"./_stream_writable":281,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\readable-stream\\lib\\_stream_duplex.js":44,"_process":74,"core-util-is":106,"inherits":255}],278:[function(require,module,exports){
 arguments[4][45][0].apply(exports,arguments)
-},{"./_stream_transform":280,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\readable-stream\\lib\\_stream_passthrough.js":45,"core-util-is":106,"inherits":254}],279:[function(require,module,exports){
+},{"./_stream_transform":280,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\readable-stream\\lib\\_stream_passthrough.js":45,"core-util-is":106,"inherits":255}],279:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -27168,7 +27071,7 @@ function indexOf (xs, x) {
 }
 
 }).call(this,require('_process'))
-},{"_process":74,"buffer":75,"core-util-is":106,"events":117,"inherits":254,"isarray":260,"stream":289,"string_decoder/":291}],280:[function(require,module,exports){
+},{"_process":74,"buffer":75,"core-util-is":106,"events":117,"inherits":255,"isarray":261,"stream":289,"string_decoder/":291}],280:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -27380,7 +27283,7 @@ function done(stream, er) {
   return stream.push(null);
 }
 
-},{"./_stream_duplex":277,"core-util-is":106,"inherits":254}],281:[function(require,module,exports){
+},{"./_stream_duplex":277,"core-util-is":106,"inherits":255}],281:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -27770,9 +27673,9 @@ function endWritable(stream, state, cb) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_duplex":277,"_process":74,"buffer":75,"core-util-is":106,"inherits":254,"stream":289}],282:[function(require,module,exports){
+},{"./_stream_duplex":277,"_process":74,"buffer":75,"core-util-is":106,"inherits":255,"stream":289}],282:[function(require,module,exports){
 arguments[4][57][0].apply(exports,arguments)
-},{"./lib/_stream_passthrough.js":278,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\node_modules\\readable-stream\\passthrough.js":57}],283:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":278,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\node_modules\\readable-stream\\passthrough.js":57}],283:[function(require,module,exports){
 var Stream = require('stream'); // hack to fix a circular dependency issue when used with browserify
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Stream = Stream;
@@ -27784,9 +27687,9 @@ exports.PassThrough = require('./lib/_stream_passthrough.js');
 
 },{"./lib/_stream_duplex.js":277,"./lib/_stream_passthrough.js":278,"./lib/_stream_readable.js":279,"./lib/_stream_transform.js":280,"./lib/_stream_writable.js":281,"stream":289}],284:[function(require,module,exports){
 arguments[4][59][0].apply(exports,arguments)
-},{"./lib/_stream_transform.js":280,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\node_modules\\readable-stream\\transform.js":59}],285:[function(require,module,exports){
+},{"./lib/_stream_transform.js":280,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\node_modules\\readable-stream\\transform.js":59}],285:[function(require,module,exports){
 arguments[4][60][0].apply(exports,arguments)
-},{"./lib/_stream_writable.js":281,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\node_modules\\readable-stream\\writable.js":60}],286:[function(require,module,exports){
+},{"./lib/_stream_writable.js":281,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\node_modules\\readable-stream\\writable.js":60}],286:[function(require,module,exports){
 /*!
  * repeat-string <https://github.com/jonschlinkert/repeat-string>
  *
@@ -28131,7 +28034,7 @@ function split (matcher, mapper, options) {
 
 },{}],289:[function(require,module,exports){
 arguments[4][50][0].apply(exports,arguments)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\index.js":50,"events":117,"inherits":254,"readable-stream/duplex.js":276,"readable-stream/passthrough.js":282,"readable-stream/readable.js":283,"readable-stream/transform.js":284,"readable-stream/writable.js":285}],290:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\stream-browserify\\index.js":50,"events":117,"inherits":255,"readable-stream/duplex.js":276,"readable-stream/passthrough.js":282,"readable-stream/readable.js":283,"readable-stream/transform.js":284,"readable-stream/writable.js":285}],290:[function(require,module,exports){
 'use strict';
 module.exports = function (str) {
 	return encodeURIComponent(str).replace(/[!'()*]/g, function (c) {
@@ -28141,7 +28044,7 @@ module.exports = function (str) {
 
 },{}],291:[function(require,module,exports){
 module.exports=require(61)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\string_decoder\\index.js":61,"buffer":75}],292:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\string_decoder\\index.js":61,"buffer":75}],292:[function(require,module,exports){
 (function (process){
 var Stream = require('stream')
 
@@ -28270,45 +28173,10 @@ exports.right = function(str){
 };
 
 },{}],294:[function(require,module,exports){
-var mat4 = require('gl-mat4')
-
-module.exports = TurntableCamera
-
-function TurntableCamera() {
-  if (!(this instanceof TurntableCamera))
-    return new TurntableCamera
-
-  this.data = new Float32Array(16)
-  this.center = new Float32Array(3)
-  this.rotation = 0
-  this.distance  = 30
-  this.downwards = 0
-}
-
-var translation = new Float32Array([ 0, 0, 0 ])
-var scratch = new Float32Array(16)
-
-TurntableCamera.prototype.view = function(data) {
-  data = data || this.data
-
-  mat4.identity(data)
-  translation[2] = -this.distance
-  translation[1] = -Math.tan(this.downwards) * this.distance
-  mat4.translate(data, data, translation)
-  mat4.rotateY(data, data, this.rotation)
-  mat4.translate(data, data, this.center)
-  mat4.identity(scratch)
-  mat4.rotateX(scratch, scratch, this.downwards)
-  mat4.multiply(data, scratch, data)
-
-  return data
-}
-
-},{"gl-mat4":139}],295:[function(require,module,exports){
 arguments[4][38][0].apply(exports,arguments)
-},{"./lib/type":296,"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\deep-eql\\node_modules\\type-detect\\index.js":38}],296:[function(require,module,exports){
+},{"./lib/type":295,"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\deep-eql\\node_modules\\type-detect\\index.js":38}],295:[function(require,module,exports){
 module.exports=require(63)
-},{"C:\\Users\\Olivier\\Desktop\\LD34\\LD34\\lib\\parse-pc2\\node_modules\\type-detect\\lib\\type.js":63}],297:[function(require,module,exports){
+},{"C:\\Users\\Olivier\\Projets\\LD34\\PostLD34\\git\\LD34\\lib\\parse-pc2\\node_modules\\type-detect\\lib\\type.js":63}],296:[function(require,module,exports){
 (function (global,Buffer){
 'use strict'
 
@@ -28525,7 +28393,7 @@ exports.clearCache = function clearCache() {
   }
 }
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"bit-twiddle":72,"buffer":75,"dup":115}],298:[function(require,module,exports){
+},{"bit-twiddle":72,"buffer":75,"dup":115}],297:[function(require,module,exports){
 "use strict"
 
 function unique_pred(list, compare) {
@@ -28584,7 +28452,7 @@ function unique(list, compare, sorted) {
 
 module.exports = unique
 
-},{}],299:[function(require,module,exports){
+},{}],298:[function(require,module,exports){
 module.exports = urlSetQuery
 function urlSetQuery (url, query) {
   if (query) {
@@ -28609,14 +28477,14 @@ function urlSetQuery (url, query) {
   return url
 }
 
-},{}],300:[function(require,module,exports){
+},{}],299:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],301:[function(require,module,exports){
+},{}],300:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -29206,7 +29074,145 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":300,"_process":74,"inherits":254}],302:[function(require,module,exports){
+},{"./support/isBuffer":299,"_process":74,"inherits":255}],301:[function(require,module,exports){
+var ua = typeof window !== 'undefined' ? window.navigator.userAgent : ''
+  , isOSX = /OS X/.test(ua)
+  , isOpera = /Opera/.test(ua)
+  , maybeFirefox = !/like Gecko/.test(ua) && !isOpera
+
+var i, output = module.exports = {
+  0:  isOSX ? '<menu>' : '<UNK>'
+, 1:  '<mouse 1>'
+, 2:  '<mouse 2>'
+, 3:  '<break>'
+, 4:  '<mouse 3>'
+, 5:  '<mouse 4>'
+, 6:  '<mouse 5>'
+, 8:  '<backspace>'
+, 9:  '<tab>'
+, 12: '<clear>'
+, 13: '<enter>'
+, 16: '<shift>'
+, 17: '<control>'
+, 18: '<alt>'
+, 19: '<pause>'
+, 20: '<caps-lock>'
+, 21: '<ime-hangul>'
+, 23: '<ime-junja>'
+, 24: '<ime-final>'
+, 25: '<ime-kanji>'
+, 27: '<escape>'
+, 28: '<ime-convert>'
+, 29: '<ime-nonconvert>'
+, 30: '<ime-accept>'
+, 31: '<ime-mode-change>'
+, 27: '<escape>'
+, 32: '<space>'
+, 33: '<page-up>'
+, 34: '<page-down>'
+, 35: '<end>'
+, 36: '<home>'
+, 37: '<left>'
+, 38: '<up>'
+, 39: '<right>'
+, 40: '<down>'
+, 41: '<select>'
+, 42: '<print>'
+, 43: '<execute>'
+, 44: '<snapshot>'
+, 45: '<insert>'
+, 46: '<delete>'
+, 47: '<help>'
+, 91: '<meta>'  // meta-left -- no one handles left and right properly, so we coerce into one.
+, 92: '<meta>'  // meta-right
+, 93: isOSX ? '<meta>' : '<menu>'      // chrome,opera,safari all report this for meta-right (osx mbp).
+, 95: '<sleep>'
+, 106: '<num-*>'
+, 107: '<num-+>'
+, 108: '<num-enter>'
+, 109: '<num-->'
+, 110: '<num-.>'
+, 111: '<num-/>'
+, 144: '<num-lock>'
+, 145: '<scroll-lock>'
+, 160: '<shift-left>'
+, 161: '<shift-right>'
+, 162: '<control-left>'
+, 163: '<control-right>'
+, 164: '<alt-left>'
+, 165: '<alt-right>'
+, 166: '<browser-back>'
+, 167: '<browser-forward>'
+, 168: '<browser-refresh>'
+, 169: '<browser-stop>'
+, 170: '<browser-search>'
+, 171: '<browser-favorites>'
+, 172: '<browser-home>'
+
+  // ff/osx reports '<volume-mute>' for '-'
+, 173: isOSX && maybeFirefox ? '-' : '<volume-mute>'
+, 174: '<volume-down>'
+, 175: '<volume-up>'
+, 176: '<next-track>'
+, 177: '<prev-track>'
+, 178: '<stop>'
+, 179: '<play-pause>'
+, 180: '<launch-mail>'
+, 181: '<launch-media-select>'
+, 182: '<launch-app 1>'
+, 183: '<launch-app 2>'
+, 186: ';'
+, 187: '='
+, 188: ','
+, 189: '-'
+, 190: '.'
+, 191: '/'
+, 192: '`'
+, 219: '['
+, 220: '\\'
+, 221: ']'
+, 222: "'"
+, 223: '<meta>'
+, 224: '<meta>'       // firefox reports meta here.
+, 226: '<alt-gr>'
+, 229: '<ime-process>'
+, 231: isOpera ? '`' : '<unicode>'
+, 246: '<attention>'
+, 247: '<crsel>'
+, 248: '<exsel>'
+, 249: '<erase-eof>'
+, 250: '<play>'
+, 251: '<zoom>'
+, 252: '<no-name>'
+, 253: '<pa-1>'
+, 254: '<clear>'
+}
+
+for(i = 58; i < 65; ++i) {
+  output[i] = String.fromCharCode(i)
+}
+
+// 0-9
+for(i = 48; i < 58; ++i) {
+  output[i] = (i - 48)+''
+}
+
+// A-Z
+for(i = 65; i < 91; ++i) {
+  output[i] = String.fromCharCode(i)
+}
+
+// num0-9
+for(i = 96; i < 106; ++i) {
+  output[i] = '<num-'+(i - 96)+'>'
+}
+
+// F1-F24
+for(i = 112; i < 136; ++i) {
+  output[i] = 'F'+(i-111)
+}
+
+},{}],302:[function(require,module,exports){
 var hiddenStore = require('./hidden-store.js');
 
 module.exports = createStore;
@@ -29336,7 +29342,7 @@ function xhrRequest (url, opt, cb) {
   return request(opt, cb)
 }
 
-},{"./lib/ensure-header.js":306,"./lib/request.js":308,"object-assign":268,"query-string":273,"url-set-query":299}],306:[function(require,module,exports){
+},{"./lib/ensure-header.js":306,"./lib/request.js":308,"object-assign":268,"query-string":273,"url-set-query":298}],306:[function(require,module,exports){
 module.exports = ensureHeader
 function ensureHeader (headers, key, value) {
   var lower = key.toLowerCase()
@@ -29611,7 +29617,7 @@ function _createXHR(options) {
 
 function noop() {}
 
-},{"global/window":245,"is-function":258,"once":269,"parse-headers":272,"xtend":310}],310:[function(require,module,exports){
+},{"global/window":246,"is-function":259,"once":269,"parse-headers":272,"xtend":310}],310:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
