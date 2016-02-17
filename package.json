@@ -20,7 +20,7 @@
 	"arraybuffer-to-buffer": "0.0.1",
 	"gl-context": "0.1.1",
     "canvas-fit": "1.2.0",
-	"gl-geometry": "2.0.0",
+	"gl-geometry": "3.1.0",
 	"gl-shader": "4.1.0",
 	"gl-clear": "2.0.0",
 	"gl-mat4": "1.1.4",
@@ -31,7 +31,8 @@
 	"gp-controls": "0.0.0",
 	"orbit-camera": "1.0.0",
 	"ray-triangle-intersection": "1.0.3",
-	"key-pressed": "0.0.1"
+	"key-pressed": "0.0.1",
+	"parse-pc2": "1.0.1"
   },
   "browserify": {
     "transform": [

@@ -3,7 +3,7 @@
 "use strict";
 
 var ObjMtlLoader = require('obj-mtl-loader');
-var PC2Loader = require('./lib/parse-pc2/index');
+var PC2Loader = require('parse-pc2');
 var Model = require('./lib/model');
 var request = require('xhr-request');
 var arrayBufferToBuffer = require('arraybuffer-to-buffer');
@@ -270,30 +270,8 @@ function render() {
 				assert.isArray(currentFrameVertices);
 				assert.equal(currentFrameVertices.length, data.baseVertices.length);
 
-				// Duplicate positions (see comments in onModelLoaded)
-				var positions = [];
-				for (var j=0; j<data.rawFaces.length; j++) {
-					var idx = data.rawFaces[j];
-					positions.push(currentFrameVertices[idx[0]]);
-					positions.push(currentFrameVertices[idx[1]]);
-					positions.push(currentFrameVertices[idx[2]]);
-				}
-				
-				// Compute normals per vertex
-				var faceNormals = computeNormals.faceNormals(data.faceIndices, positions);
-				var normals = [];
-				for (var k=0; k<data.rawFaces.length; k++) {
-					var faceNormal = faceNormals[k];
-					normals.push(faceNormal);
-					normals.push(faceNormal);
-					normals.push(faceNormal);
-				}
-
 				// Update model with animation data
-				// Stupidly inefficient but I won't recode this now :)
-				tree.geom.dispose();
-				tree.geom = Geom(gl).attr('position', positions).attr('normal', normals).faces(data.faceIndices);
-				tree.geom.data = data;
+				tree.setup(currentFrameVertices);
 
 				tree.geom.bind(shader);
 				shader.uniforms.proj = proj;
@@ -390,23 +368,12 @@ function loadTree() {
 		tree.setup(tree.geom.data.rawVertices);
 	});
 
-	var pc2Loader = new PC2Loader();
+	var pc2Loader = new PC2Loader.StreamingParser();
 	pc2Loader.on('readable', function() {
 		var pc2Data = pc2Loader.read();
 		if (pc2Data) {
 			console.log('Tree animation loaded');
-			
-			// Convert PC2 animation data
-			animation = [];
-			for (var i=0; i<pc2Data.frames.length; i++) {
-				var frame = [];
-				var points = pc2Data.frames[i].points;
-				for (var j=0; j<points.length; j++) {
-					frame.push([ points[j].x, points[j].y, points[j].z ]);
-				}
-				animation.push(frame);
-			}
-			
+			animation = pc2Data.frames;
 			animationLoaded = true;
 		}
 	});
