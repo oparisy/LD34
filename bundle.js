@@ -21047,6 +21047,9 @@ ObjLoader.prototype.load = function(objFilePath, mtlFilePath, callback) {
                 currentMat = self.parseMtl(line, currentMat);
               })
               .on('end', function() {
+                if(currentMat.name) {
+                  self.materials.push(currentMat);
+                }
                 /*Geometry and Materials*/
                 callback(
                   null,

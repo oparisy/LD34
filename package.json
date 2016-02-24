@@ -15,7 +15,7 @@
 	"brfs": "^1.4.1"
   },
   "dependencies": {
-	"obj-mtl-loader": "0.0.4",
+	"obj-mtl-loader": "0.0.5",
 	"xhr-request": "1.0.1",
 	"arraybuffer-to-buffer": "0.0.1",
 	"gl-context": "0.1.1",
